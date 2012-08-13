@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OpenPunch</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+	<meta charset="utf-8">
+
+  <!-- Boostrap -->
+  <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
+  
+  <!-- Backbone Forms -->
+  <link href="js/backbone-forms/templates/bootstrap.css" rel="stylesheet" type="text/css" />
+  
+  <!-- Custom CSS -->
+  <link href="css/style.css" rel="stylesheet" type="text/css" /> 
+  
+  <!-- jQuery -->
+  <script src="js/jquery/jquery-1.7.2.min.js" type="text/javascript"></script>
+  
+  <!-- Utilities -->
+  <script src="js/backbone/json2.min.js" type="text/javascript"></script>
+  <script src="js/underscore/underscore-1.3.3.min.js" type="text/javascript"></script>
+  <script src="js/underscore/underscore.string-2.1.0.min.js" type="text/javascript"></script>
+  <script src="js/xdate.js" type="text/javascript"></script>
+  <script src="js/jquery/jquery.cookie.js" type="text/javascript"></script>
+
+  <!-- Bootstrap -->
+  <script src="bootstrap/js/bootstrap-2.0.3.min.js"></script>
+  <script src="bootstrap/js/bootstrap-typeahead-ajax.js"></script>
+
+  <!-- Backbone -->
+  <script src="js/backbone/backbone-0.9.2.min.js" type="text/javascript"></script>
+  <script src="js/backbone-forms/backbone-forms.js"></script>
+  <script src="js/backbone-forms/templates/bootstrap.js"></script>
+
+  <!-- OpenPunch -->
+  <script src="openpunch.js" type="text/javascript"></script>
+  
+  <!--  Cordova -->
+  <script type="text/javascript" src="cordova-ios.js"></script>
+  <script type="text/javascript" src="apis/barcodescanner-ios.js"></script>
+  
+  <script type="text/javascript">
+
+    window.env = 'dev'; 
+    
+    function onBodyLoad() {   
+      var os
+        , ua = navigator.userAgent.toLowerCase();
+    
+      if (_.string.include(ua, "iphone"))
+        os = "ios";
+      else if (_.string.include(ua, "android"))
+        os = "android";
+      else
+        os = "browser";
+      
+      if (os != "browser") {
+	      document.addEventListener("deviceready", onDeviceReady, false);	      
+      } else {
+        console.log("running in browser");
+        window.OpenPunch = _OpenPunch(window.env, os);
+      }
+    }
+    
+    function onDeviceReady() {
+      var os;
+      if (window.device.platform.match(/(iphone)|(ipad)/gi))
+        os = 'ios'; 
+      else
+        os = 'android';
+      window.cordova.logger.log("running on mobile. device ready: " + [os, window.device.name, window.device.platform, window.device.version].join(' - '));
+      window.OpenPunch = _OpenPunch(window.env, os);        
+    }
+    
+  </script>    
+
+</head>
+<body onload="onBodyLoad()">
+  
+  <!--
+    SIGN IN
+  -->
+  <div id="sign-in" class="page hide">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#index">OpenPunch</a>          
+        </div>
+      </div>
+    </div><!--navbar-->     
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <p id="tagline">Easily monitor and track your group members' attendance.</p>
+        </div>
+      </div><!--descrip-->
+      <div class="row-fluid">
+        <div class="form-container span12">
+          <!--form-->
+          <div class="form-error alert alert-error hide"></div>
+          <button type="submit" class="btn btn-large btn-primary">Sign In</button>
+          <p>
+            <a href="mailto:jonarc124@gmail.com?Subject=Request%20for%20OpenPunch%20Beta%20Invite">Request an invite</a>
+          </p>
+        </div>
+      </div><!--sign in-->
+    </div><!--content-->
+  </div><!--page-->
+  
+  <!--
+    Loading
+  -->  
+  <div id="loading" class="page hide">
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <p>Loading Data</p>
+          <div class="progress progress-striped active">
+            <div class="bar" style="width: 100%;"></div>
+          </div>
+          <!--<p><a href="#account/sign-in" class="btn btn-small">Cancel</a></p>-->
+        </div>
+      </div>
+    </div><!--content-->
+  </div><!--page-->
+
+  <!--
+    EVENTS
+  -->
+  <div id="events" class="page hide">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#event">Events</a>
+          <ul class="nav pull-right">
+            <!--<li>
+              <a id="refresh-events" href="#events">
+                <i class="icon-refresh icon-white"></i>
+              </a>
+            </li>-->
+            <li>
+              <a href="#events/new"><i class="icon-plus icon-white"></i></a>              
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <!-- <p class="swipe-up-notice hide"><i class="icon-hand-down"></i> Swipe down to load past events</p> -->
+          <div class="delete-alert alert alert-success hide">
+            <button class="close" data-dismiss="alert">×</button>
+            <strong>Event deleted</strong>
+          </div>
+          <p class="list-placeholder-image list-placeholder">
+            <img src="images/help-first-event.png" alt="Create your first event by clicking the plus sign" />
+          </p>
+          <ul id="events-list" class="unstyled">
+            <!--event list-->
+          </ul>
+        </div>
+      </div>
+    </div><!--content-->
+    <div class="bottom-bar navbar">
+      <div class="bottom-bar-inner navbar-inner">
+        <div class="container pagination-centered">
+          <ul class="nav footer-nav">
+            <li class="active">
+              <a href="#events">
+                <i class="icon-calendar icon-white"></i>
+                <p>Events</p>
+              </a>
+            </li>
+            <li>
+              <a href="#contacts">
+                <i class="icon-user icon-white"></i>
+                <p>Contacts</p>
+              </a>
+            </li>
+            <li>
+              <a href="#account">
+                <i class="icon-cog icon-white"></i>
+                <p>Account</p>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--footer-->
+  </div><!--page-->
+  
+  <script id="event-li-view-template" type="text/template">
+    <a href="#events/<%= _id %>">
+      <%= name %>
+      <i class="li-arrow icon-chevron-right"></i> 
+      <span class="role"><%= eventTime(dtStart) %> to <%= eventTime(dtEnd) %></span>
+    </a>
+  </script>
+  
+  
+  <!--
+    EVENT DASHBOARD
+  -->
+  <script id="event-view-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#events"><i class="icon-chevron-left icon-white"></i></a>
+            </li>
+            <li class="event-title">
+              <a class="brand" href="#events"><%= eventTitle(name) %></a>
+            </li>
+          </ul>
+          <ul class="nav pull-right">
+            <li>
+              <a href="#events/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content has-footer container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <p class="date"><i class="icon-calendar"></i> <%= eventDate(dtStart) %> &middot; <%= eventTime(dtStart)  %> to <%= eventTime(dtEnd) %><p>
+        </div>
+      </div>
+      <div class="row-fluid">
+        <div class="action-buttons span12">
+          <a href="#events/<%= _id %>/contacts" class="btn btn-large">
+            <i class="icon-2x-list"></i>
+            <h3>Browse</h3>
+          </a>
+          <button class="init-scan btn btn-large">
+            <i class="icon-2x-qrcode"></i>
+            <h3>Scan ID</h3>
+          </button>
+        </div>
+      </div><!--buttons-->
+      <div class="row-fluid">
+        <table class="event-stats table table-bordered">
+          <tbody>
+            <tr>
+              <td>Total Attendees</td>
+              <td><%= totalAttendees() %></td>
+            </tr>
+            <tr>
+              <td>Last Check-In</td>
+              <td><%= lastAttendeeName() %></td>
+            </tr>
+          </tbody>
+        </table>
+      </div><!--stats-->
+    </div><!--content-->
+    <div class="bottom-bar navbar">
+      <div class="bottom-bar-inner navbar-inner">
+        <div class="container pagination-centered">
+          <ul class="nav footer-nav">
+            <li class="active">
+              <a href="#events/<%= _id %>/dashboard"><i class="icon-th-large icon-white"></i><p>Dashboard</p></a>
+            </li>
+            <li>
+              <a href="#events/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--footer-->
+  </script><!--event-->
+  
+  
+  <!--
+    EDIT EVENT
+  -->
+  <script id="event-edit-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#events/<%= _id %>"><i class="icon-chevron-left icon-white"></i></a>
+            </li>
+            <li class="event-title">
+              <a class="brand" href="#events/<%= _id %>">Edit Event</a>
+            </li>
+          </ul>
+          <ul class="nav pull-right">
+            <li>
+              <a href="#events/<%= _id %>/delete"><i class="icon-trash icon-white"></i></a>              
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="form-container span12">
+          <!--form-->
+          <button type="submit" class="btn btn-large btn-primary">Save Event</button>
+        </div>
+      </div><!--buttons-->
+    </div><!--content-->
+  </script><!--page-->
+  
+  <script id="event-edit-modal-template" type="text/template">
+    <div class="modal-body">
+      <h3>Event saved</h3>
+    </div>
+    <div class="modal-footer">
+      <a data-toggle="modal" href="#event-edit-modal-<%= _id %>" class="btn">Continue Editing</a>
+      <a href="#events/<%= _id %>" class="dismiss btn btn-primary">Back to Event</a>
+    </div>
+  </script>
+
+
+  <!--
+    CREATE EVENT
+  -->
+  <script id="event-create-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#events"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
+            </li>
+            <li class="event-title">
+              <a class="brand" href="#events">Create Event</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="form-container span12">
+          <!--form-->
+          <button type="submit" class="btn btn-large btn-primary">Save New Event</button>
+        </div>
+      </div><!--buttons-->
+    </div><!--content-->
+  </script><!--page-->
+  
+  
+  <!--
+    EVENT CONTACTS
+  -->
+  <script id="event-contacts-view-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#events/<%= _id %>"><i class="icon-chevron-left icon-white"></i></a>
+            </li>
+            <li>
+              <a class="brand" href="#events/<%= _id %>">Tap contact to check in/out</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <ul class="contact-list nav nav-tabs nav-stacked">
+            <!--contacts-->
+          </ul>
+        </div>
+      </div>
+    </div><!--content-->
+  </script><!--event contacts-->
+  
+  <script id="event-contact-view-template" type="text/template">
+    <a href="#index">
+      <!-- <i class="status <%= statusIconClass() %>"></i> -->
+      <%= first %> <%= last %>
+      <i class="li-arrow icon-chevron-right"></i> 
+      <% if (lastSeenDate()) { %><span class="role label <%= lastSeenLabelClass() %>"><%= lastSeenDate() %></span><% } %>      
+    </a>    
+  </script>
+  
+  
+  <!--
+    EVENT HISTORY 
+  -->
+  <script id="event-history-view-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#events"><i class="icon-chevron-left icon-white"></i></a>
+            </li>
+            <li class="event-title">
+              <a class="brand" href="#events/<%= _id %>"><%= eventTitle(name) %></a>
+            </li>
+          </ul>
+          <ul class="nav pull-right">
+            <li>
+              <a href="#events/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->
+    <div class="content has-footer container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <p class="list-placeholder">No check-ins yet.</p>
+          <ul class="action-list unstyled">
+            <!--contacts-->
+          </ul>
+        </div>
+      </div>
+    </div><!--content-->
+    <div class="bottom-bar navbar">
+      <div class="bottom-bar-inner navbar-inner">
+        <div class="container pagination-centered">
+          <ul class="footer-nav nav">
+            <li>
+              <a href="#events/<%= _id %>/dashboard"><i class="icon-th-large icon-white"></i><p>Dashboard</p></a>
+            </li>
+            <li class="active">
+              <a href="#events/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--footer-->
+  </script><!--event history-->
+  
+  <script id="event-action-view-template" type="text/template">
+    <a href="#contacts/<%= contact._id %>"><%= contact.first %> <%= contact.last %></a> checked <%= status %>
+    <span class="role"><%= timestamp() %></span>
+  </script>
+  
+  
+  <!--
+    CONTACTS
+  -->
+  <div id="contacts" class="page hide">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#contacts">Contacts</a>
+          <ul class="nav pull-right">
+            <!-- <li>
+              <a href="#contacts/search"><i class="icon-search icon-white"></i></a>              
+            </li> -->
+            <li>
+              <a href="#contacts/new"><i class="icon-plus icon-white"></i></a>              
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <div class="delete-alert alert alert-success hide">
+            <button class="close" data-dismiss="alert">×</button>
+            <strong>Contact deleted</strong>
+          </div>
+          <p class="list-placeholder-image list-placeholder">
+            <img src="images/help-first-contact.png" alt="Create your first contact by clicking the plus sign" />
+          </p>
+          <ul class="contact-list nav nav-tabs nav-stacked">
+            <!--event list-->
+          </ul>
+        </div>
+      </div>
+    </div><!--content-->
+    <div class="bottom-bar navbar">
+      <div class="bottom-bar-inner navbar-inner">
+        <div class="container pagination-centered">
+          <ul class="nav footer-nav">
+            <li>
+              <a href="#events">
+                <i class="icon-calendar icon-white"></i>
+                <p>Events</p>
+              </a>
+            </li>
+            <li class="active">
+              <a href="#contacts">
+                <i class="icon-user icon-white"></i>
+                <p>Contacts</p>
+              </a>
+            </li>
+            <li>
+              <a href="#account">
+                <i class="icon-cog icon-white"></i>
+                <p>Account</p>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--footer-->
+  </div><!--page-->
+  
+  <script id="contact-li-view-template" type="text/template">
+    <a href="#contacts/<%= _id %>">
+      <!-- <img src="images/<%= _id %>.png" alt="<%= last %> thumnail" /> -->
+      <span class="name"><%= first %> <%= last %></span>
+      <i class="li-arrow icon-chevron-right"></i> 
+      <span class="role label"><%= role %></span>
+    </a>
+  </script>
+  
+  
+  <!--
+    CONTACT
+  -->
+  <script id="contact-view-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#contacts"><i class="icon-chevron-left icon-white"></i></a>
+            </li>
+            <li class="title">
+              <a class="brand" href="#contacts"><%= firstLast() %></a>
+            </li>
+          </ul>
+          <ul class="nav pull-right">
+            <li>
+              <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content has-footer container-fluid">
+      <div class="row-fluid">
+        <table class="contact-stats table table-bordered">
+          <tbody>
+            <tr>
+              <td>Role</td>
+              <td><%= role %></td>
+            </tr>
+            <tr>
+              <td>Total Check-Ins</td>
+              <td><%= totalCheckIns() %></td>
+            </tr>
+            <tr>
+              <td>Total Activity Time</td>
+              <td><%= totalTime() %></td>
+            </tr>
+          </tbody>
+        </table>
+      </div><!--stats-->
+    </div><!--content-->
+    <div class="bottom-bar navbar">
+      <div class="bottom-bar-inner navbar-inner">
+        <div class="container pagination-centered">
+          <ul class="nav footer-nav">
+            <li class="active">
+              <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
+            </li>
+            <li>
+              <a href="#contacts/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--footer-->
+  </script><!--contact-->
+  
+  
+  <!--
+    EDIT CONTACT
+  -->
+  <script id="contact-edit-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#contacts"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
+            </li>
+            <li class="title">
+              <a class="brand" href="#contacts">Edit Contact</a>
+            </li>
+          </ul>
+          <ul class="nav pull-right">
+            <li>
+              <a href="#contacts/<%= _id %>/delete"><i class="icon-trash icon-white"></i></a>              
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="form-container span12">
+          <!--form-->
+          <button type="submit" class="btn btn-large btn-primary">Save Contact</button>
+        </div>
+      </div>
+    </div><!--content-->
+  </script><!--page-->
+  
+  <script id="contact-edit-modal-template" type="text/template">
+    <div class="modal-body">
+      <h3>Contact saved</h3>
+    </div>
+    <div class="modal-footer">
+      <a data-toggle="modal" href="#contact-edit-modal-<%= _id %>" class="btn">Continue Editing</a>
+      <a href="#contacts/<%= _id %>" class="dismiss btn btn-primary">Back to Contact</a>
+    </div>
+  </script>
+  
+  
+  <!--
+    CREATE CONTACT
+  -->
+  <script id="contact-create-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#contacts"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
+            </li>
+            <li class="title">
+              <a class="brand" href="#contacts">Create Contact</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->    
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="form-container span12">
+          <!--form-->
+          <button type="submit" class="btn btn-large btn-primary">Save New Contact</button>
+        </div>
+      </div>
+    </div><!--content-->
+  </script><!--page-->
+  
+  
+  <!--
+    CONTACT HISTORY 
+  -->
+  <script id="contact-history-view-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#contacts"><i class="icon-chevron-left icon-white"></i></a>
+            </li>
+            <li>
+              <a class="brand" href="#contacts"><%= firstLast() %></a>
+            </li>
+          </ul>
+          <ul class="nav pull-right">
+            <li>
+              <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->
+    <div class="content has-footer container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <p class="list-placeholder">No actions for this contact yet.</p>
+          <ul class="action-list unstyled">
+            <!--contacts-->
+          </ul>
+        </div>
+      </div>
+    </div><!--content-->
+    <div class="bottom-bar navbar">
+      <div class="bottom-bar-inner navbar-inner">
+        <div class="container pagination-centered">
+          <ul class="nav footer-nav">
+            <li>
+              <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
+            </li>
+            <li class="active">
+              <a href="#contacts/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--footer-->
+  </script><!--contact history-->
+  
+  <script id="contact-action-view-template" type="text/template">
+    Checked <%= statusVerb() %> <a href="#events/<%= event._id %>"><%= event.name %></a>
+    <span class="role"><%= timestamp() %></span>
+  </script>
+  
+  <script id="inactive-contact-action-view-template" type="text/template">
+    Checked <%= statusVerb() %> <a href="#events/<%= event._id %>"><%= event.name %></a>
+    <span class="role"><%= timestamp() %></span>
+  </script>
+
+  <!--
+    Account
+  -->
+  <div id="account" class="page hide">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#event">Account</a>
+          <a href="#account/sign-out" class="btn btn-small btn-danger pull-right">Sign Out</a>
+        </div>
+      </div>
+    </div><!--navbar-->
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div id="content-account" class="span12">
+          <!-- account info -->
+        </div>
+      </div>
+    </div><!--content-->
+    <div class="bottom-bar navbar">
+      <div class="bottom-bar-inner navbar-inner">
+        <div class="container pagination-centered">
+          <ul class="nav footer-nav">
+            <li>
+              <a href="#events">
+                <i class="icon-calendar icon-white"></i>
+                <p>Events</p>
+              </a>
+            </li>
+            <li>
+              <a href="#contacts">
+                <i class="icon-user icon-white"></i>
+                <p>Contacts</p>
+              </a>
+            </li>
+            <li class="active">
+              <a href="#account">
+                <i class="icon-cog icon-white"></i>
+                <p>Account</p>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--footer-->
+  </div><!--page-->
+
+  <script id="account-view-template" type="text/template">
+    <h6>Email</h6>
+    <p><%= email %></p>
+  </script>
+
+  <!--
+  404
+  -->
+  <div id="error-404" class="page hide">
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <h3>404. Oops!</h3>
+          <p>We couldn't find what you were looking for.</p>
+          <p><a href="#account/sign-out" class="btn btn-small">Sign Out and Try Again</a></p>
+        </div>
+      </div>
+    </div><!--content-->
+  </div><!--page-->
+  
+</body>
+</html>

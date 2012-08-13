@@ -1,0 +1,28 @@
+
+/*
+ * More sprite icons
+ */
+
+@icon2xSize: 96px;
+
+[class^="icon-2x-"],
+[class*=" icon-2x-"] {
+  display: inline-block;
+  width: @icon2xSize;
+  height: @icon2xSize;
+  .ie7-restore-right-whitespace();
+  line-height: @icon2xSize;
+  vertical-align: text-top;
+  background-image: url("@{iconsPath}/glyphicons@2x.png");
+  background-position: @icon2xSize;
+  background-repeat: no-repeat;
+
+}
+
+.icon-2x(@col, @row) {
+  background-position: -(@col * @icon2xSize) -(@row + 1) * @icon2xSize;
+}
+
+.icon-2x-search  { .icon-2x(8, 3); }
+.icon-2x-qrcode  { .icon-2x(9, 26); }
+.icon-2x-list    { .icon-2x(7, 16); }
