@@ -170,7 +170,11 @@ function _OpenPunch(env, os) {
       return _.string.sprintf("%s h %s m", h, m);
     },
     money: function(v) {
-     return _.string.sprintf('$%.2f', parseFloat(v));
+      var d = parseFloat(v);
+      if (d>=0)
+        return _.string.sprintf('$%.2f', d);
+      else
+        return _.string.sprintf('-$%.2f', Math.abs(d));
     },
     simpleDate: function(dt) {
       return new XDate(dt).toString('MMM d');
@@ -188,11 +192,21 @@ function _OpenPunch(env, os) {
         dtMod: new Date(),
         amountCash: 0.0,
         amountCheck: 0.0,
+        eventCost: 0.0,
         type: 'Subscription Refill'
       };
     },
     amountTotal: function() {
-      return this.get('amountCash')+this.get('amountCheck');
+      return parseFloat(this.get('amountCash') || 0)+parseFloat(this.get('amountCheck') || 0)-parseFloat(this.get('eventCost') || 0);
+    },
+    amountClass: function() {
+      var b = this.amountTotal();
+      if (b > 0)
+        return 'plus';
+      else if (b < 0)
+        return 'minus';
+      else
+        return '';
     }
   });
 
@@ -200,7 +214,7 @@ function _OpenPunch(env, os) {
     model: self.Transaction,
     url: self.apiRoot + 'transactions',
     comparator: function(model) {
-      return -model.get('dtAdd');
+      return -1 * new XDate(model.get('dtAdd')).getTime();
     }
   });
 
@@ -272,6 +286,9 @@ function _OpenPunch(env, os) {
    */
   
   self.Event = OpenPunchModel.extend({
+    defaults: {
+      cost: 5
+    },
     parse: function(model) {
       model.attendees = new self.Attendees(model.attendees || [], {eventId: model._id});
       return model;
@@ -305,7 +322,14 @@ function _OpenPunch(env, os) {
    */ 
   
   self.Attendee = OpenPunchModel.extend({
-    urlRoot: self.apiRoot + 'attendees', 
+    urlRoot: self.apiRoot + 'attendees',
+    initialize: function() {
+      _.bindAll(this
+        , 'updateStatus'
+        , 'updateStatusSuccess'
+        , 'chargeForEvent'
+        , 'chargeForEventSuccess');
+    },
     
     /*
      * Convenience methods
@@ -342,7 +366,7 @@ function _OpenPunch(env, os) {
         status: this.isCheckedIn() ? 'out' : 'in'
       }), {
         wait: true,
-        success: this.updateStatusSuccess,
+        success: this.chargeForEvent,
         error: this.updateStatusError
       });
     },
@@ -352,7 +376,39 @@ function _OpenPunch(env, os) {
     updateStatusError: function(err, resp) {
       console.error(err);
       alert('Could not update status');
+    },
+
+    /*
+    Create transaction
+     */
+    chargeForEvent: function(model, coll) {
+      var trans = self.transactions.where({
+        eventId: this.get('eventId'),
+        contactId: this.get('contactId')
+      });
+      // Only charge once per event
+      if (trans.length === 0)
+        self.transactions.create(_.extend(
+          self.account.meta(),
+          {
+            eventId: this.get('eventId'),
+            contactId: this.get('contactId'),
+            type: 'Event Fee',
+            eventCost: self.events.get(this.get('eventId')).get('cost')
+          }
+        ), {
+          wait: true,
+          success: this.chargeForEventSuccess,
+          error: this.chargeForEventError
+        });
+    },
+    chargeForEventSuccess: function(model, resp) {
+      console.log('event fee transaction success');
+    },
+    chargeForEventError: function(err, resp) {
+      console.error(err);
     }
+
   });
   
   self.Attendees = OpenPunchCollection.extend({
@@ -692,47 +748,54 @@ function _OpenPunch(env, os) {
 
   self.EventSchema = Backbone.Model.extend({
     schema: {
-      name:           {
-                        title: 'Name',
-                        validators: ['required'],
-                        fieldClass: 'event-name',
-                        editorAttrs: {
-                          placeholder: 'e.g. Volunteer Club'
-                        },
-                        editorClass: 'span12'
-                      },
-      dtStart:        {
-                        title: 'Start Date &amp; Time',
-                        dataType: 'datetime',
-                        validators: ['required'],
-                        fieldClass: 'event-startdatetime',
-                        editorClass: 'span12'
-                      },
-      dtEnd:          {
-                        title: 'End Date &amp; Time',
-                        dataType: 'datetime',
-                        validators: ['required'],
-                        fieldClass: 'event-enddatetime',
-                        editorClass: 'span12'
-                      },
-      location:       {
-                        title: 'Location',
-                        fieldClass: 'event-location',
-                        editorAttrs: {
-                          placeholder: 'e.g. Chicago Ave.'
-                        },
-                        help: '(optional)',
-                        editorClass: 'span12'
-                      },
-      facilitator:    {
-                        title: 'Facilitator',
-                        fieldClass: 'event-facilitator',
-                        editorAttrs: {
-                          placeholder: 'e.g. Tara Wickey'
-                        },
-                        help: '(optional)',
-                        editorClass: 'span12'
-                      }
+      name: {
+        title: 'Name',
+        validators: ['required'],
+        fieldClass: 'event-name',
+        editorAttrs: {
+          placeholder: 'e.g. Volunteer Club'
+        },
+        editorClass: 'span12'
+      },
+      dtStart: {
+        title: 'Start Date &amp; Time',
+        dataType: 'datetime',
+        validators: ['required'],
+        fieldClass: 'event-startdatetime',
+        editorClass: 'span12'
+      },
+      dtEnd: {
+        title: 'End Date &amp; Time',
+        dataType: 'datetime',
+        validators: ['required'],
+        fieldClass: 'event-enddatetime',
+        editorClass: 'span12'
+      },
+      cost: {
+        title: 'Cost',
+        validators: ['required'],
+        fieldClass: 'event-cost',
+        editorClass: 'span3 currency',
+        template: 'currency'
+      },
+      location: {
+        title: 'Location',
+        fieldClass: 'event-location',
+        editorAttrs: {
+          placeholder: 'e.g. Chicago Ave.'
+        },
+        help: '(optional)',
+        editorClass: 'span12'
+      },
+      facilitator: {
+        title: 'Facilitator',
+        fieldClass: 'event-facilitator',
+        editorAttrs: {
+          placeholder: 'e.g. Tara Wickey'
+        },
+        help: '(optional)',
+        editorClass: 'span12'
+      }
     }
   });
 
@@ -760,6 +823,13 @@ function _OpenPunch(env, os) {
         validators: ['required'],
         fieldClass: 'event-enddatetime',
         editorClass: 'span12'
+      },
+      cost: {
+        title: 'Cost',
+        validators: ['required'],
+        fieldClass: 'event-cost',
+        editorClass: 'span3 currency',
+        template: 'currency'
       },
       location: {
         title: 'Location',
@@ -823,6 +893,7 @@ function _OpenPunch(env, os) {
             name: this.model.get('name'),
             dtStart: self.helpers.datePickerFormats[self.os].datetime(this.model.get('dtStart')),
             dtEnd: self.helpers.datePickerFormats[self.os].datetime(this.model.get('dtEnd')),
+            cost: this.model.get('cost'),
             location: this.model.get('location'),
             facilitator: this.model.get('facilitator')
           }),
@@ -836,6 +907,7 @@ function _OpenPunch(env, os) {
             name: this.model.get('name'),
             dtStart: new XDate(this.model.get('dtStart')).toDate(),
             dtEnd: new XDate(this.model.get('dtEnd')).toDate(),
+            cost: this.model.get('cost'),
             location: this.model.get('location'),
             facilitator: this.model.get('facilitator')
           }),
@@ -1223,8 +1295,8 @@ function _OpenPunch(env, os) {
       this.model = new self.Transaction({contactId: this.options.contactId});
       this.form = new Backbone.Form({
         model: new self.TransactionSchema({
-          amountCash: '5.00',
-          amountCheck: '0.00'
+          amountCash: 5,
+          amountCheck: 0
         }),
         idPrefix: 'transaction-'
       });
@@ -1312,7 +1384,8 @@ function _OpenPunch(env, os) {
      */
     helpers: function() {
       return {
-        amountTotal: _.bind(this.model.amountTotal, this.model)
+        amountTotal: _.bind(this.model.amountTotal, this.model),
+        amountClass: _.bind(this.model.amountClass, this.model)
       };
     },
     render: function() {

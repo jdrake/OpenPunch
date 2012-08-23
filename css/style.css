@@ -597,6 +597,14 @@
 .table .right {
   text-align: right;
 }
+.table-big {
+  font-size: 1.5em;
+  font-weight: 200;
+}
+.table-big td:last-child {
+  text-align: right;
+  font-weight: normal;
+}
 a.brand i {
   vertical-align: middle;
   margin-top: -4px;
@@ -676,6 +684,12 @@ form .help {
   display: inline-block;
   vertical-align: top;
   height: 2.01em;
+}
+td.plus {
+  color: #46a546;
+}
+td.minus {
+  color: #9d261d;
 }
 .page .content {
   position: relative;
@@ -792,8 +806,13 @@ form .help {
 .event-page .date {
   text-align: center;
 }
+.event-page .event-stats {
+  font-size: 1.5em;
+  font-weight: 200;
+}
 .event-page .event-stats td:last-child {
   text-align: right;
+  font-weight: normal;
 }
 .form-container form input,
 .form-container form select {
@@ -883,12 +902,6 @@ form .help {
 .contact-page .contact-stats td:last-child {
   text-align: right;
   font-weight: normal;
-}
-.contact-page .contact-stats td:last-child.plus {
-  color: #46a546;
-}
-.contact-page .contact-stats td:last-child.minus {
-  color: #9d261d;
 }
 .contact-history-page .action-list li {
   padding: 0.25em 0px;

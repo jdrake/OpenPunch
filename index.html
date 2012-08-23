@@ -244,7 +244,7 @@
         </div>
       </div><!--buttons-->
       <div class="row-fluid">
-        <table class="event-stats table table-bordered">
+        <table class="event-stats table">
           <tbody>
             <tr>
               <td>Total Attendees</td>
@@ -253,6 +253,10 @@
             <tr>
               <td>Last Check-In</td>
               <td><%= lastAttendeeName() %></td>
+            </tr>
+            <tr>
+              <td>Cost</td>
+              <td><%= money(cost) %></td>
             </tr>
           </tbody>
         </table>
@@ -726,7 +730,7 @@
   <script id="contact-transaction-tr-view-template" type="text/template">
     <td><%= simpleDate(dtAdd) %></td>
     <td><%= type %></td>
-    <td class="right"><%= money(amountTotal()) %></td>
+    <td class="right <%= amountClass() %>"><%= money(amountTotal()) %></td>
     <td class="right"><i class="icon-chevron-right"></i></td>
   </script>
 
