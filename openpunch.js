@@ -7,8 +7,8 @@ function _OpenPunch(env, os) {
     os: os
   };
   
-  self.apiRoot = 'http://littledrakedev.com/api/';
-//  self.apiRoot = 'http://127.0.0.1:3030/api/';
+//  self.apiRoot = 'http://littledrakedev.com/api/';
+  self.apiRoot = 'http://127.0.0.1:3030/api/';
 //  self.apiRoot = 'http://192.168.0.101:3030/api/';
 
   // Hook into jquery
@@ -168,9 +168,41 @@ function _OpenPunch(env, os) {
       var h = Math.floor(hrs)
         , m = Math.floor((hrs-h)*60);
       return _.string.sprintf("%s h %s m", h, m);
+    },
+    money: function(v) {
+     return _.string.sprintf('$%.2f', parseFloat(v));
     }
   };
-  
+
+
+  /*
+  Transaction
+   */
+  self.Transaction = OpenPunchModel.extend({
+    defaults: function() {
+      return {
+        dtAdd: new Date(),
+        dtMod: new Date(),
+        amountCash: 0.0,
+        amountCheck: 0.0,
+        type: 'Subscription Refill'
+      };
+    },
+    amountTotal: function() {
+      return this.get('amountCash')+this.get('amountCheck');
+    }
+  });
+
+  self.Transactions = OpenPunchCollection.extend({
+    model: self.Transaction,
+    url: self.apiRoot + 'transactions',
+    comparator: function(model) {
+      return -model.get('dtMod');
+    }
+  });
+
+  self.transactions = new self.Transactions();
+
   
   /*
    * Contact
@@ -185,6 +217,39 @@ function _OpenPunch(env, os) {
     },
     actions: function() {
       return new self.Actions(self.actions.where({contactId: this.id}));
+    },
+    transactions: function() {
+      return new self.Transactions(self.transactions.where({contactId: this.id}));
+    },
+    balance: function() {
+      return this.transactions().reduce(function(memo, t) {
+        return memo + t.amountTotal();
+      }, 0.0);
+    },
+    balanceClass: function() {
+      var b = this.balance();
+      if (b > 0)
+        return 'plus';
+      else if (b < 0)
+        return 'minus';
+      else
+        return '';
+    },
+    totalCheckIns: function() {
+      return _.uniq(_.pluck(this.actions().where({status: 'in'}), 'eventId')).length;
+    },
+    totalTime: function() {
+      var groups = this.actions().groupBy(function(action) {
+        return action.get('eventId');
+      });
+      // dtOut - dtIn, Hours
+      var tt = _.reduce(groups, function(memo, group) {
+        if (group.length != 2)
+          return memo;
+        else
+          return memo + Math.abs(new XDate(group[1].get('dt')).diffHours(group[0].get('dt')));
+      }, 0);
+      return self.helpers.totalHours(tt);
     }
   });
 
@@ -345,6 +410,7 @@ function _OpenPunch(env, os) {
       self.events.fetch(options);
       self.contacts.fetch(options);
       self.actions.fetch(options);
+      self.transactions.fetch(options);
     }
   });
   
@@ -378,7 +444,10 @@ function _OpenPunch(env, os) {
       BaseFormView.prototype.initialize.call(this);
       _.bindAll(this, 'signInSuccess', 'signInError');
       this.form = new Backbone.Form({
-        model: new self.SignInSchema(),
+        model: new self.SignInSchema({
+          email: 'jonarc124@gmail.com',
+          password: 'drakejn3'
+        }),
         idPrefix: 'signin-'
       });
     },
@@ -435,10 +504,11 @@ function _OpenPunch(env, os) {
     el: '#loading',
     initialize: function() {
       this.numLoaded = 0;
-      this.numToLoad = 3;
+      this.numToLoad = 4;
       self.events.on('reset', this.dataFetched, this);
       self.contacts.on('reset', this.dataFetched, this);
       self.actions.on('reset', this.dataFetched, this);
+      self.transactions.on('reset', this.dataFetched, this);
     },
     dataReady: function() {
       return this.numLoaded == this.numToLoad;
@@ -1023,40 +1093,27 @@ function _OpenPunch(env, os) {
 
   self.ContactView = Backbone.View.extend({
     className: 'page contact-page',
+    template: _.template($('#contact-view-template').html()),
     attributes: function() {
       return {
         id: 'contact-' + this.model.id
       };
     },
-    template: _.template($('#contact-view-template').html()),
-    initialize: function() {
-      _.bindAll(this, 'totalCheckIns', 'totalTime');
-    },
-    totalCheckIns: function() {
-      return _.uniq(_.pluck(this.model.actions().where({status: 'in'}), 'eventId')).length;
-    },
-    totalTime: function() {
-      var groups = this.model.actions().groupBy(function(action) {
-        return action.get('eventId');
-      });
-      // dtOut - dtIn, Hours
-      var tt = _.reduce(groups, function(memo, group) {
-        if (group.length != 2)
-          return memo;
-        else
-          return memo + Math.abs(new XDate(group[1].get('dt')).diffHours(group[0].get('dt')));
-      }, 0);
-      return self.helpers.totalHours(tt);
-    },
     helpers: function() {
       return {
         firstLast: _.bind(this.model.firstLast, this.model),
-        totalCheckIns: this.totalCheckIns,
-        totalTime: this.totalTime
+        totalCheckIns: _.bind(this.model.totalCheckIns, this.model),
+        totalTime: _.bind(this.model.totalTime, this.model),
+        balance: _.bind(this.model.balance, this.model),
+        balanceClass: _.bind(this.model.balanceClass, this.model)
       };
     },
     render: function() {
-      this.$el.html(this.template(_.extend(this.model.toJSON(), self.helpers, this.helpers())));
+      this.$el.html(this.template(_.extend(
+        this.model.toJSON(),
+        self.helpers,
+        this.helpers())
+      ));
       return this;
     }
   });
@@ -1127,6 +1184,63 @@ function _OpenPunch(env, os) {
     },
     contactCreateError: function() {
       console.log(arguments);
+    }
+  });
+
+  self.ContactTransactionsView = Backbone.View.extend({
+    className: 'page contact-transactions-page hide',
+    attributes: function() {
+      if (!this.model)
+        self.router.navigate('loading', {trigger: true});
+      return {
+        id: 'contact-transactions-' + this.model.id
+      };
+    },
+    template: _.template($('#contact-transactions-view-template').html()),
+    initialize: function() {
+      _.bindAll(this, 'renderContactTransaction');
+    },
+    helpers: function() {
+      return {
+        firstLast: _.bind(this.model.firstLast, this.model)
+      };
+    },
+    render: function() {
+      this.$el.html(this.template(_.extend(
+        this.model.toJSON(),
+        self.helpers,
+        this.helpers())
+      ));
+      this.list = this.$el.find('.transaction-list');
+      this.model.transactions().each(this.renderContactTransaction);
+      // Placeholder if no transactions
+      this.$el.find('.list-placeholder').toggleClass('hide', this.model.transactions().length>0);
+      return this;
+    },
+    renderContactTransaction: function(action) {
+      var view = new self.ContactTransactionTrView({model: action});
+      this.list.append(view.render().el);
+    }
+  });
+
+  self.ContactTransactionTrView = Backbone.View.extend({
+    tagName: 'tr',
+    template: _.template($('#contact-transaction-tr-view-template').html()),
+    initialize: function() {
+
+    },
+
+    /*
+     * Rendering
+     */
+    helpers: function() {
+      return {
+
+      };
+    },
+    render: function() {
+      this.$el.html(this.template({})); //_.extend(this.model.toJSON(), self.helpers, this.helpers())));
+      return this;
     }
   });
 
@@ -1232,6 +1346,7 @@ function _OpenPunch(env, os) {
       ContactCreateView: {},
       ContactView: {},
       EditContactView: {},
+      ContactTransactionsView: {},
       ContactHistoryView: {},
       Error404: {}
     },
@@ -1275,6 +1390,7 @@ function _OpenPunch(env, os) {
       'contacts/:id/details'  : 'contactDetails',
       'contacts/:id/edit'     : 'contactEdit',
       'contacts/:id/delete'   : 'contactDelete',
+      'contacts/:id/transactions': 'contactTransactions',
       'contacts/:id/history'  : 'contactHistory',
       '404'                   : 'error404'
     },
@@ -1332,6 +1448,7 @@ function _OpenPunch(env, os) {
       self.events.reset([], {silent: true});
       self.contacts.reset([], {silent: true});
       self.actions.reset([], {silent: true});
+      self.transactions.reset([], {silent: true});
       // Reset load count
       this.renderedViews.LoadingView[0].numLoaded = 0;
       console.log('account cleared');
@@ -1519,7 +1636,7 @@ function _OpenPunch(env, os) {
         if (!model) {
           self.router.navigate('404', {trigger: true});
         } else {
-          this.renderViews(id, ['ContactView', 'ContactHistoryView'], {model: model, idPrefix: 'contact-'});
+          this.renderViews(id, ['ContactView', 'ContactTransactionsView', 'ContactHistoryView'], {model: model, idPrefix: 'contact-'});
           this.renderViews(id, ['EditContactView'], {model: model, idPrefix: 'contact-edit-'});
         }
       }
@@ -1550,6 +1667,13 @@ function _OpenPunch(env, os) {
           }
         });
       }
+    },
+    contactTransactions: function(id) {
+      if (!self.account.has('sessionId') || !self.account.id) {
+        self.router.navigate('account/sign-in', {trigger: true});
+        return false;
+      }
+      this.loadExistingPage(id, 'ContactTransactionsView');
     },
     contactHistory: function(id) {
       if (!self.account.has('sessionId') || !self.account.id) {

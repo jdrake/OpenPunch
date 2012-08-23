@@ -26,13 +26,15 @@ a.brand {
   }
 }
 
-.navbar {
-  .nav {
-    li {
-      a.btn {
-        color: inherit;
-        line-height: inherit;
-        padding: inherit;
+.nav {
+  li {
+    a.btn {
+      padding: 0.25em 0.75em;
+      color: @white;
+      &:hover {
+        .transition(none);
+        .buttonBackground(@btnSuccessBackground, @btnSuccessBackgroundHighlight);
+        background-color: inherit;
       }
     }
   }
@@ -300,8 +302,12 @@ form {
     margin: 1em;
   }
   .contact-stats {
+    font-size: 1.5em;
+    font-weight: 200;
+
     td:last-child { 
       text-align: right;
+      font-weight: normal;
     }
   }
 }
@@ -319,6 +325,10 @@ form {
       }
     }
   }
+}
+
+.contact-transactions-page {
+
 }
 
 /*

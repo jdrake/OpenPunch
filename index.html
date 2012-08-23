@@ -532,6 +532,11 @@
           </ul>
           <ul class="nav pull-right">
             <li>
+              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-link btn-success">
+                <i class="icon-plus icon-white"></i> credit
+              </a>
+            </li>
+            <li>
               <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
             </li>
           </ul>
@@ -540,7 +545,7 @@
     </div><!--navbar-->    
     <div class="content has-footer container-fluid">
       <div class="row-fluid">
-        <table class="contact-stats table table-bordered">
+        <table class="contact-stats table">
           <tbody>
             <tr>
               <td>Role</td>
@@ -554,6 +559,10 @@
               <td>Total Activity Time</td>
               <td><%= totalTime() %></td>
             </tr>
+            <tr>
+              <td>Balance</td>
+              <td class="<%= balanceClass() %>"><%= money(balance()) %></td>
+            </tr>
           </tbody>
         </table>
       </div><!--stats-->
@@ -564,6 +573,9 @@
           <ul class="nav footer-nav">
             <li class="active">
               <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
+            </li>
+            <li>
+              <a href="#contacts/<%= _id %>/transactions"><span>$</span><p>Transactions</p></a>
             </li>
             <li>
               <a href="#contacts/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
@@ -584,10 +596,10 @@
         <div class="container">
           <ul class="nav">
             <li>
-              <a href="#contacts"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
+              <a href="#contacts/<%= _id %>"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
             </li>
             <li class="title">
-              <a class="brand" href="#contacts">Edit Contact</a>
+              <a class="brand" href="#contacts/<%= _id %>">Edit Contact</a>
             </li>
           </ul>
           <ul class="nav pull-right">
@@ -646,8 +658,75 @@
       </div>
     </div><!--content-->
   </script><!--page-->
-  
-  
+
+
+  <!--
+    CONTACT TRANSACTIONS
+  -->
+  <script id="contact-transactions-view-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#contacts"><i class="icon-chevron-left icon-white"></i></a>
+            </li>
+            <li>
+              <a class="brand" href="#contacts"><%= firstLast() %></a>
+            </li>
+          </ul>
+          <ul class="nav pull-right">
+            <li>
+              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-link btn-success">
+                <i class="icon-plus icon-white"></i> credit
+              </a>
+            </li>
+            <li>
+              <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->
+    <div class="content has-footer container-fluid">
+      <div class="row-fluid">
+        <div class="span12">
+          <p class="list-placeholder">No transactions for this contact yet.</p>
+          <table class="transaction-list table">
+            <tbody>
+              <!-- transaction <tr> -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!--content-->
+    <div class="bottom-bar navbar">
+      <div class="bottom-bar-inner navbar-inner">
+        <div class="container pagination-centered">
+          <ul class="nav footer-nav">
+            <li>
+              <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
+            </li>
+            <li class="active">
+              <a href="#contacts/<%= _id %>/transactions"><span>$</span><p>Transactions</p></a>
+            </li>
+            <li>
+              <a href="#contacts/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--footer-->
+  </script><!--contact transactions-->
+
+  <script id="contact-transaction-tr-view-template" type="text/template">
+    <td>1</td>
+    <td>2</td>
+    <td>3</td>
+    <td><i class="icon-chevron-right"></i></td>
+  </script>
+
+
   <!--
     CONTACT HISTORY 
   -->
@@ -664,6 +743,11 @@
             </li>
           </ul>
           <ul class="nav pull-right">
+            <li>
+              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-link btn-success">
+                <i class="icon-plus icon-white"></i> credit
+              </a>
+            </li>
             <li>
               <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
             </li>
@@ -687,6 +771,9 @@
           <ul class="nav footer-nav">
             <li>
               <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
+            </li>
+            <li>
+              <a href="#contacts/<%= _id %>/transactions"><span>$</span><p>Transactions</p></a>
             </li>
             <li class="active">
               <a href="#contacts/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
