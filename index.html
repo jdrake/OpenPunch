@@ -691,6 +691,10 @@
     <div class="content has-footer container-fluid">
       <div class="row-fluid">
         <div class="span12">
+          <div class="add-alert alert alert-success hide">
+            <button class="close" data-dismiss="alert">×</button>
+            <strong>Transaction added</strong>
+          </div>
           <p class="list-placeholder">No transactions for this contact yet.</p>
           <table class="transaction-list table">
             <tbody>
@@ -720,11 +724,40 @@
   </script><!--contact transactions-->
 
   <script id="contact-transaction-tr-view-template" type="text/template">
-    <td>1</td>
-    <td>2</td>
-    <td>3</td>
-    <td><i class="icon-chevron-right"></i></td>
+    <td><%= simpleDate(dtAdd) %></td>
+    <td><%= type %></td>
+    <td class="right"><%= money(amountTotal()) %></td>
+    <td class="right"><i class="icon-chevron-right"></i></td>
   </script>
+
+
+  <!--
+    Create transaction
+  -->
+  <script id="transaction-create-template" type="text/template">
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a href="#contacts/<%= contactId %>"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
+            </li>
+            <li class="title">
+              <a class="brand" href="#contacts/<%= contactId %>">Create Transaction</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><!--navbar-->
+    <div class="content container-fluid">
+      <div class="row-fluid">
+        <div class="form-container span12">
+          <!--form-->
+          <button type="submit" class="btn btn-large btn-primary">Save Transaction</button>
+        </div>
+      </div>
+    </div><!--content-->
+  </script><!--page-->
 
 
   <!--

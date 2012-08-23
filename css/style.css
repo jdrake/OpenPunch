@@ -594,6 +594,9 @@
 .icon-2x-list {
   background-position: -672px -1632px;
 }
+.table .right {
+  text-align: right;
+}
 a.brand i {
   vertical-align: middle;
   margin-top: -4px;
@@ -664,6 +667,15 @@ form .help {
 .form-container button[type='submit'] {
   width: 100%;
   margin-bottom: 1em;
+}
+.add-on.currency {
+  font-size: 1.40em;
+  font-weight: 200;
+  padding: 0px 0.5em;
+  line-height: 2em;
+  display: inline-block;
+  vertical-align: top;
+  height: 2.01em;
 }
 .page .content {
   position: relative;
@@ -795,6 +807,10 @@ form .help {
 .form-container form textarea.span12 {
   width: 99.99999998999999%;
 }
+.form-container form input.currency {
+  width: 33.33333333333333%;
+  text-align: right;
+}
 .event-contacts-page .contact-list li .status {
   margin-right: 0.5em;
 }
@@ -867,6 +883,12 @@ form .help {
 .contact-page .contact-stats td:last-child {
   text-align: right;
   font-weight: normal;
+}
+.contact-page .contact-stats td:last-child.plus {
+  color: #46a546;
+}
+.contact-page .contact-stats td:last-child.minus {
+  color: #9d261d;
 }
 .contact-history-page .action-list li {
   padding: 0.25em 0px;

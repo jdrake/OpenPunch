@@ -171,6 +171,9 @@ function _OpenPunch(env, os) {
     },
     money: function(v) {
      return _.string.sprintf('$%.2f', parseFloat(v));
+    },
+    simpleDate: function(dt) {
+      return new XDate(dt).toString('MMM d');
     }
   };
 
@@ -197,7 +200,7 @@ function _OpenPunch(env, os) {
     model: self.Transaction,
     url: self.apiRoot + 'transactions',
     comparator: function(model) {
-      return -model.get('dtMod');
+      return -model.get('dtAdd');
     }
   });
 
@@ -1187,6 +1190,74 @@ function _OpenPunch(env, os) {
     }
   });
 
+  self.TransactionSchema = Backbone.Model.extend({
+    schema: {
+      type: {
+        title: 'Transaction Type',
+        type: 'Select',
+        options: ['Subscription Refill', 'Yearly Fee', 'Adhoc Fee'],
+        validators: ['required'],
+        fieldClass: 'transaction-type',
+        editorClass: 'span12'
+      },
+      amountCash: {
+        title: 'Cash Amount',
+        validators: ['required'],
+        fieldClass: 'transaction-cash',
+        editorClass: 'span3 currency',
+        template: 'currency'
+      },
+      amountCheck:    {
+        title: 'Check Amount',
+        validators: ['required'],
+        fieldClass: 'transaction-check',
+        editorClass: 'span3 currency',
+        template: 'currency'
+      }
+    }
+  });
+
+  self.TransactionCreateView = BaseFormView.extend({
+    initialize: function() {
+      _.bindAll(this, 'transactionCreateSuccess', 'transactionCreateError');
+      this.model = new self.Transaction({contactId: this.options.contactId});
+      this.form = new Backbone.Form({
+        model: new self.TransactionSchema({
+          amountCash: '5.00',
+          amountCheck: '0.00'
+        }),
+        idPrefix: 'transaction-'
+      });
+    },
+    commitForm: function(e) {
+      e.preventDefault();
+      var errors = this.form.commit();
+      if (!errors) {
+        self.transactions.create(
+          _.extend(
+            self.account.meta(),
+            this.options,
+            this.form.model.toJSON()
+          ), {
+          success: this.transactionCreateSuccess,
+          error: this.transactionCreateError
+        });
+      }
+    },
+    transactionCreateSuccess: function(model) {
+      // Reset model
+      this.form.model.clear();
+      // Go to new contact transactions list
+      self.router.navigate('contacts/' + model.get('contactId') + '/transactions', {trigger: true});
+      // Show alert
+      self.router.renderedViews['ContactTransactionsView'][model.get('contactId')].showAddAlert();
+    },
+    transactionCreateError: function(model, resp) {
+      console.log(resp.responseText);
+      self.transactions.remove(self.transactions.getByCid(model.cid));
+    }
+  });
+
   self.ContactTransactionsView = Backbone.View.extend({
     className: 'page contact-transactions-page hide',
     attributes: function() {
@@ -1220,6 +1291,12 @@ function _OpenPunch(env, os) {
     renderContactTransaction: function(action) {
       var view = new self.ContactTransactionTrView({model: action});
       this.list.append(view.render().el);
+    },
+    showAddAlert: function() {
+      this.$el.find('.add-alert').removeClass('hide');
+      _.delay(_.bind(function() {
+        this.$el.find('.add-alert').addClass('hide');
+      }, this), 3000);
     }
   });
 
@@ -1235,11 +1312,15 @@ function _OpenPunch(env, os) {
      */
     helpers: function() {
       return {
-
+        amountTotal: _.bind(this.model.amountTotal, this.model)
       };
     },
     render: function() {
-      this.$el.html(this.template({})); //_.extend(this.model.toJSON(), self.helpers, this.helpers())));
+      this.$el.html(this.template(_.extend(
+        this.model.toJSON(),
+        self.helpers,
+        this.helpers())
+      ));
       return this;
     }
   });
@@ -1346,6 +1427,7 @@ function _OpenPunch(env, os) {
       ContactCreateView: {},
       ContactView: {},
       EditContactView: {},
+      TransactionCreateView: {},
       ContactTransactionsView: {},
       ContactHistoryView: {},
       Error404: {}
@@ -1391,6 +1473,7 @@ function _OpenPunch(env, os) {
       'contacts/:id/edit'     : 'contactEdit',
       'contacts/:id/delete'   : 'contactDelete',
       'contacts/:id/transactions': 'contactTransactions',
+      'contacts/:id/transactions/new': 'transactionNew',
       'contacts/:id/history'  : 'contactHistory',
       '404'                   : 'error404'
     },
@@ -1638,6 +1721,7 @@ function _OpenPunch(env, os) {
         } else {
           this.renderViews(id, ['ContactView', 'ContactTransactionsView', 'ContactHistoryView'], {model: model, idPrefix: 'contact-'});
           this.renderViews(id, ['EditContactView'], {model: model, idPrefix: 'contact-edit-'});
+          this.renderViews(id, ['TransactionCreateView'], {contactId: id, idPrefix: 'transaction-create-'});
         }
       }
     },
@@ -1666,6 +1750,25 @@ function _OpenPunch(env, os) {
             alert('Oops! Could not delete contact.');
           }
         });
+      }
+    },
+    transactionNew: function(contactId) {
+      if (!self.account.has('sessionId') || !self.account.id) {
+        self.router.navigate('account/sign-in', {trigger: true});
+        return false;
+      }
+      var id = contactId
+        , viewName = 'TransactionCreateView'
+        , idPrefix = 'transaction';
+      $('.page').addClass('hide');
+      if (_.has(this.renderedViews[viewName], id)) {
+        this.loadExistingPage(id, viewName);
+      } else {
+        this.renderViews(id, [viewName], {
+          idPrefix: idPrefix+'-create-',
+          contactId: contactId
+        });
+        this.renderedViews[viewName][id].$el.removeClass('hide');
       }
     },
     contactTransactions: function(id) {

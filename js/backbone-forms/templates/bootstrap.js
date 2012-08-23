@@ -49,6 +49,20 @@
       </div>\
     ',
 
+    currency: '\
+      <div class="control-group field-{{key}}">\
+        <label class="control-label" for="{{id}}">\
+          {{title}}\
+          <div class="help-inline help">{{help}}</div>\
+        </label>\
+        <div class="controls">\
+          <div class="input-prepend">\
+            <span class="add-on currency">$</span>{{editor}}\
+          </div>\
+        <div>\
+      </div>\
+    ',
+
     nestedField: '\
       <div class="field-{{key}}">\
         <div title="{{title}}" class="input-xlarge">{{editor}}</div>\

@@ -19,6 +19,10 @@
 // Chimu custom styles
 @import "sprites";
 
+.table .right {
+  text-align: right;
+}
+
 a.brand {
   i {
     vertical-align: middle;
@@ -78,6 +82,16 @@ form {
     width: 100%;
     margin-bottom: 1em;
   }
+}
+
+.add-on.currency {
+  font-size: 1.40em;
+  font-weight: 200;
+  padding: 0px 0.5em;
+  line-height: 2em;
+  display: inline-block;
+  vertical-align: top;
+  height: 2.01em;
 }
  
 
@@ -229,6 +243,10 @@ form {
     textarea.span12 {
       width: 99.99999998999999%;
     }
+    input.currency {
+      width: 33.33333333333333%;
+      text-align: right;
+    }
   }
 }
 
@@ -308,6 +326,13 @@ form {
     td:last-child { 
       text-align: right;
       font-weight: normal;
+
+      &.plus {
+        color: @green;
+      }
+      &.minus {
+        color: @red;
+      }
     }
   }
 }
@@ -328,7 +353,9 @@ form {
 }
 
 .contact-transactions-page {
+  .transaction-list {
 
+  }
 }
 
 /*
