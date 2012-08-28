@@ -298,6 +298,40 @@ function _OpenPunch(env, os) {
         // This event, and contact still exists
         return action.get('eventId') == this.id && self.contacts.get(action.get('contactId'));
       }, this)));
+    },
+    status: function() {
+      var start = new XDate(this.get('dtStart'))
+        , end = new XDate(this.get('dtEnd'))
+        , now = new XDate()
+        , dStart = start.diffMinutes(now)
+        , dEnd = end.diffMinutes(now);
+      if (dStart < 0 && dEnd < 0)
+        return 'future';
+      else if (dStart > 0 && dEnd > 0)
+        return 'past';
+      else
+        return 'live';
+    },
+    totalAttendees: function() {
+      var checkIns = this.allActions().where({status: 'in'})
+        , contactIds = _.map(checkIns, function(action){ return action.get('contactId'); })
+        , uniqIds = _.uniq(contactIds)
+      return uniqIds.length;
+    },
+    lastAttendeeName: function() {
+      var actions = this.allActions();
+      if (actions.length > 0) {
+        var contactId = actions.first().get('contactId');
+        var contact = self.contacts.get(contactId);
+        if (contact) {
+          return contact.firstLast();
+        } else {
+          console.error('No contact found with id ', contactId);
+          return '?!';
+        }
+      } else {
+        return '-';
+      }
     }
   });
 
@@ -310,7 +344,7 @@ function _OpenPunch(env, os) {
       }
     },
     comparator: function(event) {
-      return event.get('dtStart');
+      return -new XDate(event.get('dtStart')).getTime();
     }
   });
   
@@ -648,39 +682,17 @@ function _OpenPunch(env, os) {
     },
     initialize: function() {
       _.bindAll(this
-        , 'totalAttendees'
-        , 'lastAttendeeName'
         , 'initScan'
         , 'scanSuccess'
         , 'scanError'
       );
       self.actions.on('add', this.refresh, this);
     },
-    totalAttendees: function() {
-      var checkIns = this.model.allActions().where({status: 'in'})
-        , contactIds = _.map(checkIns, function(action){ return action.get('contactId'); })
-        , uniqIds = _.uniq(contactIds)
-      return uniqIds.length;
-    },
-    lastAttendeeName: function() {
-      var actions = this.model.allActions();
-      if (actions.length > 0) {
-        var contactId = actions.first().get('contactId');
-        var contact = self.contacts.get(contactId);
-        if (contact) {
-          return contact.firstLast();
-        } else {
-          console.error('No contact found with id ', contactId);
-          return '?!';
-        }
-      } else {
-        return '-';
-      }
-    },
     helpers: function() {
       return {
-        totalAttendees: this.totalAttendees,
-        lastAttendeeName: this.lastAttendeeName
+        totalAttendees: this.model.totalAttendees(),
+        lastAttendeeName: this.model.lastAttendeeName(),
+        status: this.model.status()
       };
     },
     refresh: function(action) {
@@ -688,7 +700,11 @@ function _OpenPunch(env, os) {
         this.render();
     },
     render: function() {
-      this.$el.html(this.template(_.extend(this.model.toJSON(), self.helpers, this.helpers())));
+      this.$el.html(this.template(_.extend(
+        this.model.toJSON(),
+        self.helpers,
+        this.helpers()
+      )));
       return this;
     },
 
@@ -699,9 +715,9 @@ function _OpenPunch(env, os) {
       if (window.plugins.barcodeScanner) {
         window.plugins.barcodeScanner.scan(this.scanSuccess, this.scanError);
       } else {
-//        alert('Scanning from browser not supported');
-        var contact = self.contacts.at(0);
-        this.scanSuccess({text: contact.id});
+        alert('Scanning from browser not supported');
+//        var contact = self.contacts.at(0);
+//        this.scanSuccess({text: contact.id});
       }
     },
     scanSuccess: function(result) {
@@ -921,9 +937,11 @@ function _OpenPunch(env, os) {
   self.EventCreateView = BaseFormView.extend({
     initialize: function() {
       _.bindAll(this, 'eventCreateSuccess');
-      this.model = new self.Event();
+      this.model = new self.Event({cost: 5});
       this.form = new Backbone.Form({
-        model: (self.os=='ios') ? new self.EventSchema() : new self.EventSchemaDetail(),
+        model: (self.os=='ios')
+          ? new self.EventSchema(this.model.toJSON())
+          : new self.EventSchemaDetail(this.model.toJSON()),
         idPrefix: 'event-'
       });
     },

@@ -231,28 +231,48 @@
           <p class="date"><i class="icon-calendar"></i> <%= eventDate(dtStart) %> &middot; <%= eventTime(dtStart)  %> to <%= eventTime(dtEnd) %><p>
         </div>
       </div>
-      <div class="row-fluid">
-        <div class="action-buttons span12">
-          <a href="#events/<%= _id %>/contacts" class="btn btn-large">
-            <i class="icon-2x-list"></i>
-            <h3>Browse</h3>
-          </a>
-          <button class="init-scan btn btn-large">
-            <i class="icon-2x-qrcode"></i>
-            <h3>Scan ID</h3>
-          </button>
+      <% if (status=='past') { %>
+        <div class="row-fluid">
+          <div class="event-status span12">
+            <div class="alert alert-block alert-info">
+              <h3>Event finished</h3>
+              You can no longer check someone into this event.
+            </div>
+          </div>
         </div>
-      </div><!--buttons-->
+      <% } else if (status=='future') { %>
+        <div class="row-fluid">
+          <div class="event-status span12">
+            <div class="alert alert-block">
+              <h3>Event coming soon</h3>
+              You can start checking people into this event once it begins.
+            </div>
+          </div>
+        </div><!--buttons-->
+      <% } else { %>
+        <div class="row-fluid">
+          <div class="action-buttons span12">
+            <a href="#events/<%= _id %>/contacts" class="btn btn-large">
+              <i class="icon-2x-list"></i>
+              <h3>Browse</h3>
+            </a>
+            <button class="init-scan btn btn-large">
+              <i class="icon-2x-qrcode"></i>
+              <h3>Scan ID</h3>
+            </button>
+          </div>
+        </div><!--buttons-->
+      <% } %>
       <div class="row-fluid">
         <table class="event-stats table">
           <tbody>
             <tr>
               <td>Total Attendees</td>
-              <td><%= totalAttendees() %></td>
+              <td><%= totalAttendees %></td>
             </tr>
             <tr>
               <td>Last Check-In</td>
-              <td><%= lastAttendeeName() %></td>
+              <td><%= lastAttendeeName %></td>
             </tr>
             <tr>
               <td>Cost</td>
