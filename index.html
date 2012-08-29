@@ -6,16 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
 	<meta charset="utf-8">
 
-  <!-- Boostrap -->
-  <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-  
-  <!-- Backbone Forms -->
+  <!-- 3rd party css -->
+  <link href="js/backbone-forms/templates/default.css" rel="stylesheet" type="text/css" />
   <link href="js/backbone-forms/templates/bootstrap.css" rel="stylesheet" type="text/css" />
-  
+
   <!-- Custom CSS -->
-  <link href="css/style.css" rel="stylesheet" type="text/css" /> 
-  
+  <link href="css/style.css" rel="stylesheet" type="text/css" />
+
   <!-- jQuery -->
   <script src="js/jquery/jquery-1.7.2.min.js" type="text/javascript"></script>
   
@@ -102,9 +99,6 @@
           <!--form-->
           <div class="form-error alert alert-error hide"></div>
           <button type="submit" class="btn btn-large btn-primary">Sign In</button>
-          <p>
-            <a href="mailto:jonarc124@gmail.com?Subject=Request%20for%20OpenPunch%20Beta%20Invite">Request an invite</a>
-          </p>
         </div>
       </div><!--sign in-->
     </div><!--content-->
@@ -219,7 +213,7 @@
           </ul>
           <ul class="nav pull-right">
             <li>
-              <a href="#events/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
+              <a href="#events/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>              
             </li>
           </ul>
         </div>
@@ -236,7 +230,7 @@
           <div class="event-status span12">
             <div class="alert alert-block alert-info">
               <h3>Event finished</h3>
-              You can no longer check someone into this event.
+              You can no longer check people into this event.
             </div>
           </div>
         </div>
@@ -393,7 +387,7 @@
     <div class="content container-fluid">
       <div class="row-fluid">
         <div class="span12">
-          <ul class="contact-list nav nav-tabs nav-stacked">
+          <ul class="contact-list nav nav-pills nav-stacked">
             <!--contacts-->
           </ul>
         </div>
@@ -404,7 +398,7 @@
   <script id="event-contact-view-template" type="text/template">
     <a href="#index">
       <!-- <i class="status <%= statusIconClass() %>"></i> -->
-      <%= first %> <%= last %>
+      <span class="name"><%= first %> <%= last %></span>
       <i class="li-arrow icon-chevron-right"></i> 
       <% if (lastSeenDate()) { %><span class="role label <%= lastSeenLabelClass() %>"><%= lastSeenDate() %></span><% } %>      
     </a>    
@@ -428,7 +422,7 @@
           </ul>
           <ul class="nav pull-right">
             <li>
-              <a href="#events/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
+              <a href="#events/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>              
             </li>
           </ul>
         </div>
@@ -495,7 +489,7 @@
           <p class="list-placeholder-image list-placeholder">
             <img src="images/help-first-contact.png" alt="Create your first contact by clicking the plus sign" />
           </p>
-          <ul class="contact-list nav nav-tabs nav-stacked">
+          <ul class="contact-list nav nav-pills nav-stacked">
             <!--event list-->
           </ul>
         </div>
@@ -556,12 +550,12 @@
           </ul>
           <ul class="nav pull-right">
             <li>
-              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-link btn-success">
+              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
                 <i class="icon-plus icon-white"></i> credit
               </a>
             </li>
             <li>
-              <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
+              <a href="#contacts/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>
             </li>
           </ul>
         </div>
@@ -701,12 +695,12 @@
           </ul>
           <ul class="nav pull-right">
             <li>
-              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-link btn-success">
+              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
                 <i class="icon-plus icon-white"></i> credit
               </a>
             </li>
             <li>
-              <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>
+              <a href="#contacts/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>
             </li>
           </ul>
         </div>
@@ -750,8 +744,8 @@
   <script id="contact-transaction-tr-view-template" type="text/template">
     <td><%= simpleDate(dtAdd) %></td>
     <td><%= type %></td>
-    <td class="right <%= amountClass() %>"><%= money(amountTotal()) %></td>
-    <td class="right"><i class="icon-chevron-right"></i></td>
+    <td class="right <%= amountClass() %>"><%= money(ledgerAmount()) %></td>
+    <!--<td class="right"><i class="icon-chevron-right"></i></td>-->
   </script>
 
 
@@ -801,12 +795,12 @@
           </ul>
           <ul class="nav pull-right">
             <li>
-              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-link btn-success">
+              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
                 <i class="icon-plus icon-white"></i> credit
               </a>
             </li>
             <li>
-              <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>              
+              <a href="#contacts/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>
             </li>
           </ul>
         </div>

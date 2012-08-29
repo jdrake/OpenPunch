@@ -1,0 +1,86 @@
+/*
+Page
+*/
+
+a.brand {
+  i {
+    vertical-align: middle;
+    margin-top: -4px;
+  }
+}
+
+.navbar-fixed-top {
+  .navbar-inverse;
+}
+
+.nav {
+  li {
+    a.btn {
+      padding: 0.25em 0.75em;
+      color: @white;
+      &:hover {
+        .transition(none);
+        .buttonBackground(@btnSuccessBackground, @btnSuccessBackgroundHighlight);
+        background-color: inherit;
+      }
+    }
+  }
+}
+
+.bottom-bar {
+  .navbar-inverse;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin-bottom: 0px;
+  .bottom-bar-inner {
+    .border-radius(0px);
+  }
+}
+
+.content.has-footer {
+  padding-bottom: 60px;
+}
+
+.li-arrow {
+  float: right;
+  margin-top: 0.3em;
+}
+
+.page {
+  .content {
+    position: relative;
+
+    .list-placeholder-image {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+    }
+  }
+  .footer-nav {
+    width: 100%;
+    li {
+      display: inline-block;
+      float: none;
+      &.active {
+        border-top: 3px solid @btnInfoBackground;
+        a {
+          i {
+            .opacity(100);
+          }
+        }
+      }
+      a {
+        text-align: center;
+        padding: 0.5em 1em;
+        i {
+          .opacity(50);
+        }
+        p {
+          margin: 0px;
+        }
+      }
+    }
+  }
+}

@@ -188,19 +188,16 @@ function _OpenPunch(env, os) {
   self.Transaction = OpenPunchModel.extend({
     defaults: function() {
       return {
-        dtAdd: new Date(),
-        dtMod: new Date(),
-        amountCash: 0.0,
-        amountCheck: 0.0,
-        eventCost: 0.0,
+        amount: 0,
+        side: 'c', // [c]redit or [d]ebit
         type: 'Subscription Refill'
       };
     },
-    amountTotal: function() {
-      return parseFloat(this.get('amountCash') || 0)+parseFloat(this.get('amountCheck') || 0)-parseFloat(this.get('eventCost') || 0);
+    ledgerAmount: function() {
+      return this.get('amount') * ((this.get('side')=='c') ? 1 : -1);
     },
     amountClass: function() {
-      var b = this.amountTotal();
+      var b = this.ledgerAmount();
       if (b > 0)
         return 'plus';
       else if (b < 0)
@@ -240,7 +237,7 @@ function _OpenPunch(env, os) {
     },
     balance: function() {
       return this.transactions().reduce(function(memo, t) {
-        return memo + t.amountTotal();
+        return memo + t.ledgerAmount();
       }, 0.0);
     },
     balanceClass: function() {
@@ -428,7 +425,8 @@ function _OpenPunch(env, os) {
             eventId: this.get('eventId'),
             contactId: this.get('contactId'),
             type: 'Event Fee',
-            eventCost: self.events.get(this.get('eventId')).get('cost')
+            amount: self.events.get(this.get('eventId')).get('cost'),
+            side: 'd'
           }
         ), {
           wait: true,
@@ -844,8 +842,8 @@ function _OpenPunch(env, os) {
         title: 'Cost',
         validators: ['required'],
         fieldClass: 'event-cost',
-        editorClass: 'span3 currency',
-        template: 'currency'
+        template: 'currency',
+        editorClass: 'span3 currency'
       },
       location: {
         title: 'Location',
@@ -937,7 +935,7 @@ function _OpenPunch(env, os) {
   self.EventCreateView = BaseFormView.extend({
     initialize: function() {
       _.bindAll(this, 'eventCreateSuccess');
-      this.model = new self.Event({cost: 5});
+      this.model = new self.Event();
       this.form = new Backbone.Form({
         model: (self.os=='ios')
           ? new self.EventSchema(this.model.toJSON())
@@ -1280,44 +1278,71 @@ function _OpenPunch(env, os) {
     }
   });
 
+  var isNumber = function(field, value, formValues) {
+    var err = {
+      type: field,
+      message: 'must be a number'
+    };
+    if (_.isNaN(parseFloat(value)))
+      return err;
+  };
+
+  var gt0 = function(field, value, formValues) {
+    var err = {
+      type: field,
+      message: 'must be more than $0'
+    };
+    if (parseFloat(value) <= 0)
+      return err;
+  };
+
   self.TransactionSchema = Backbone.Model.extend({
     schema: {
       type: {
         title: 'Transaction Type',
         type: 'Select',
-        options: ['Subscription Refill', 'Yearly Fee', 'Adhoc Fee'],
+        options: ['Subscription Refill', 'Adhoc Charge'],
         validators: ['required'],
         fieldClass: 'transaction-type',
         editorClass: 'span12'
       },
-      amountCash: {
-        title: 'Cash Amount',
-        validators: ['required'],
-        fieldClass: 'transaction-cash',
+      amount: {
+        title: 'Amount',
+        validators: [
+          'required',
+          _.bind(isNumber, this, 'amount'),
+          _.bind(gt0, this, 'amount')
+        ],
+        fieldClass: 'transaction-amount',
         editorClass: 'span3 currency',
         template: 'currency'
       },
-      amountCheck:    {
-        title: 'Check Amount',
-        validators: ['required'],
-        fieldClass: 'transaction-check',
-        editorClass: 'span3 currency',
-        template: 'currency'
+      notes: {
+        title: 'Notes',
+        type: 'TextArea',
+        help: '(optional)',
+        fieldClass: 'transaction-notes',
+        editorClass: 'span12'
       }
     }
   });
 
   self.TransactionCreateView = BaseFormView.extend({
     initialize: function() {
-      _.bindAll(this, 'transactionCreateSuccess', 'transactionCreateError');
+      _.bindAll(this, 'transactionCreateSuccess', 'transactionCreateError', 'changeSide');
       this.model = new self.Transaction({contactId: this.options.contactId});
       this.form = new Backbone.Form({
         model: new self.TransactionSchema({
-          amountCash: 5,
-          amountCheck: 0
+          amount: 0
         }),
         idPrefix: 'transaction-'
       });
+      this.form.on('type:change', this.changeSide);
+    },
+    changeSide: function(form, titleEditor) {
+      // Update ledger side
+      this.model.set({side: (titleEditor.getValue()=='Adhoc Charge') ? 'd' : 'c'}, {silent: true});
+      return;
     },
     commitForm: function(e) {
       e.preventDefault();
@@ -1327,11 +1352,15 @@ function _OpenPunch(env, os) {
           _.extend(
             self.account.meta(),
             this.options,
+            this.model.toJSON(),
             this.form.model.toJSON()
-          ), {
-          success: this.transactionCreateSuccess,
-          error: this.transactionCreateError
-        });
+          ),
+          {
+            wait: true,
+            success: this.transactionCreateSuccess,
+            error: this.transactionCreateError
+          }
+        );
       }
     },
     transactionCreateSuccess: function(model) {
@@ -1402,7 +1431,7 @@ function _OpenPunch(env, os) {
      */
     helpers: function() {
       return {
-        amountTotal: _.bind(this.model.amountTotal, this.model),
+        ledgerAmount: _.bind(this.model.ledgerAmount, this.model),
         amountClass: _.bind(this.model.amountClass, this.model)
       };
     },

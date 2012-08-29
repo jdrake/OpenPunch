@@ -1,0 +1,88 @@
+/*
+ * Events
+ */
+
+#events-list {
+  li {
+
+    a {
+    //      #gradientBar(darken(@white, 3%), darken(@white, 5%));
+      #gradient > .vertical(darken(@white, 5%), darken(@white, 3%));
+      .border-radius(8px);
+      border: 1px solid darken(@white, 7%);
+      padding: 0.5em;
+      margin: 0.5em 0px;
+      display: block;
+      font-size: 1.5em;
+      font-weight: 200;
+      &:hover {
+        #gradient > .vertical(darken(@white, 3%), darken(@white, 5%));
+        text-decoration: none;
+        color: inherit;
+      }
+    }
+    .role {
+      font-size: 0.70em;
+      color: @grayLight;
+      display: block;
+    }
+    .li-arrow {
+      margin-top: 0.6em;
+    }
+  }
+}
+
+.event-page {
+
+  .event-status {
+    text-align: center;
+
+    .alert {
+      padding: 1em;
+
+      h3 {
+        margin: 0px;
+      }
+    }
+  }
+
+  .action-buttons {
+    white-space: nowrap;
+    margin-bottom: 2em;
+    text-align: center;
+    .btn {
+      margin: 0px 1em;
+
+      h3 {
+        margin: 0px;
+      }
+    }
+  }
+  .date {
+    text-align: center;
+  }
+  .event-stats {
+    .table-big;
+  }
+}
+
+.event-contacts-page {
+  .contact-list {
+    .big-pills;
+  }
+}
+
+.event-history-page {
+  .action-list {
+    li {
+      padding: 0.25em 0px;
+      .role {
+        margin-top: 1px;
+        margin-right: 1em;
+        float: right;
+        font-size: 0.75em;
+        color: @grayLight;
+      }
+    }
+  }
+}
