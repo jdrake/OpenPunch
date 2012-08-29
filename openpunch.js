@@ -218,6 +218,16 @@ function _OpenPunch(env, os) {
         return 'minus';
       else
         return '';
+    },
+    pastTransactions: function() {
+      return this.collection.filter(function(t) {
+        return new XDate(t.get('dtAdd'))<new XDate(this.get('dtAdd')) && t.get('contactId')===this.get('contactId');
+      }, this);
+    },
+    newBalance: function() {
+      return _.reduce(this.pastTransactions(), function(memo, t) {
+        return memo + t.ledgerAmount();
+      }, this.ledgerAmount());
     }
   });
 
@@ -1446,7 +1456,8 @@ function _OpenPunch(env, os) {
     helpers: function() {
       return {
         ledgerAmount: _.bind(this.model.ledgerAmount, this.model),
-        amountClass: _.bind(this.model.amountClass, this.model)
+        amountClass: _.bind(this.model.amountClass, this.model),
+        newBalance: _.bind(this.model.newBalance, this.model)
       };
     },
     render: function() {

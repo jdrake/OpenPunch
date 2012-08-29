@@ -715,6 +715,14 @@
           </div>
           <p class="list-placeholder">No transactions for this contact yet.</p>
           <table class="transaction-list table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
             <tbody>
               <!-- transaction <tr> -->
             </tbody>
@@ -745,6 +753,7 @@
     <td><%= simpleDate(dtAdd) %></td>
     <td><%= type %></td>
     <td class="right <%= amountClass() %>"><%= money(ledgerAmount()) %></td>
+    <td class="right"><%= money(newBalance()) %></td>
     <!--<td class="right"><i class="icon-chevron-right"></i></td>-->
   </script>
 
