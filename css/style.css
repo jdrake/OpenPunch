@@ -7137,7 +7137,7 @@ h6 {
   font-size: 2.5em;
   line-height: 1em;
   font-weight: 200;
-  padding-bottom: 1em;
+  padding-bottom: 0.5em;
 }
 /*
  * Loading
@@ -7588,7 +7588,7 @@ a.brand i {
   border-radius: 0px;
 }
 .content.has-footer {
-  padding-bottom: 60px;
+  margin-bottom: 60px;
 }
 .li-arrow {
   float: right;
@@ -7630,6 +7630,9 @@ a.brand i {
 /*
 Tables
 */
+.table {
+  margin-bottom: 0px;
+}
 .table .right {
   text-align: right;
 }
@@ -7658,6 +7661,9 @@ form .help {
 .form-container button[type='submit'] {
   width: 100%;
   margin-bottom: 1em;
+}
+.form-container form {
+  margin-bottom: 0.5em;
 }
 .form-container form input,
 .form-container form select,
@@ -7762,6 +7768,9 @@ form .help {
 /*
  * Events
  */
+#events .navbar-fixed-top {
+  margin-bottom: 0.5em;
+}
 #events-list li a {
   background-color: #f4f4f4;
   background-image: -moz-linear-gradient(top, #f2f2f2, #f7f7f7);
