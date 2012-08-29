@@ -99,15 +99,29 @@ function _OpenPunch(env, os) {
     eventTime: function(d) {
       return new XDate(d).toString('h:mmtt');
     },
-    eventDate: function(d) {
-      var date = new XDate(d)
-        , diff = date.diffDays(new XDate());
-      if (diff > -1 && diff < 1)
-        return 'Today';
-      else if (diff >= 1 && diff < 2)
-        return 'Yesterday';
-      else
+    eventDate: function(dt) {
+      var now = new XDate()
+        , date = new XDate(dt)
+        , y0 = now.getFullYear()
+        , m0 = now.getMonth()
+        , d0 = now.getDate()
+        , y = date.getFullYear()
+        , m = date.getMonth()
+        , d = date.getDate()
+        , delta = now.diffDays(date);
+      if (delta < 2 && delta >= 0) {
+        if (d===d0)
+          return 'Today';
+        else
+          return 'Tomorrow';
+      } else if (delta > -2 && delta <=0) {
+        if (d===d0)
+          return 'Today';
+        else
+          return 'Yesterday';
+      } else {
         return date.toString('ddd MMM d, yyyy');
+      }
     },
     eventTitle: function(name) {
       return _.string.prune(name, 25);
