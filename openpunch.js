@@ -568,10 +568,7 @@ function _OpenPunch(env, os) {
       BaseFormView.prototype.initialize.call(this);
       _.bindAll(this, 'signInSuccess', 'signInError');
       this.form = new Backbone.Form({
-        model: new self.SignInSchema({
-          email: 'jonarc124@gmail.com',
-          password: 'drakejn3'
-        }),
+        model: new self.SignInSchema(),
         idPrefix: 'signin-'
       });
     },
