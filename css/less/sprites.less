@@ -3,26 +3,25 @@
  * More sprite icons
  */
 
-@icon2xSize: 96px;
+@iconLargeSize: 48px;
 
-[class^="icon-2x-"],
-[class*=" icon-2x-"] {
+[class^="icon-large-"],
+[class*=" icon-large-"] {
   display: inline-block;
-  width: @icon2xSize;
-  height: @icon2xSize;
+  width: @iconLargeSize;
+  height: @iconLargeSize;
   .ie7-restore-right-whitespace();
-  line-height: @icon2xSize;
+  line-height: @iconLargeSize;
   vertical-align: text-top;
-  background-image: url("@{iconsPath}/glyphicons@2x.png");
-  background-position: @icon2xSize;
+  background-image: url("@{imagePath}/icons-large.png");
+  background-position: @iconLargeSize;
   background-repeat: no-repeat;
 
 }
 
-.icon-2x(@col, @row) {
-  background-position: -(@col * @icon2xSize) -(@row + 1) * @icon2xSize;
+.icon-large(@col, @row) {
+  background-position: -((@col - 1) * @iconLargeSize) -((@row - 1) * @iconLargeSize);
 }
 
-.icon-2x-search  { .icon-2x(8, 3); }
-.icon-2x-qrcode  { .icon-2x(9, 26); }
-.icon-2x-list    { .icon-2x(7, 16); }
+.icon-large-list    { .icon-large(1, 1); }
+.icon-large-qrcode  { .icon-large(2, 1); }
