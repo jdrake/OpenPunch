@@ -4,3 +4,4 @@ syntax: glob
 .gitignore
 .project
 *.orig
+config.js

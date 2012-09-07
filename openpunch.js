@@ -6,10 +6,15 @@ function _OpenPunch(env, os) {
     env: env,
     os: os
   };
-  
-//  self.apiRoot = 'http://littledrakedev.com/api/';
-  self.apiRoot = 'http://127.0.0.1:3030/api/';
-//  self.apiRoot = 'http://192.168.0.101:3030/api/';
+
+  var apiRoots = {
+    dev: 'http://127.0.0.1:3032/api/',
+    network: 'http://192.168.0.101:3032/api/',
+    staging: 'http://dev.openpunchapp.com/api/',
+    live: 'http://openpunchapp.com/api/'
+  };
+
+  self.apiRoot = apiRoots[self.env];
 
   // Hook into jquery
   // Use withCredentials to send the server cookies
@@ -18,6 +23,7 @@ function _OpenPunch(env, os) {
     options.xhrFields = {
       withCredentials: true
     };
+    jqXHR.setRequestHeader("X-Requested-With", "XMLHttpRequest");
   });
   
   /*

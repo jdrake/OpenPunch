@@ -33,6 +33,7 @@
   <script src="js/backbone-forms/templates/bootstrap.js"></script>
 
   <!-- OpenPunch -->
+  <script src="config.js" type="text/javascript"></script>
   <script src="openpunch.js" type="text/javascript"></script>
   
   <!--  Cordova -->
@@ -41,7 +42,9 @@
   
   <script type="text/javascript">
 
-    window.env = 'dev'; 
+    function launch(os) {
+      window.OpenPunch = _OpenPunch(window.OpenPunchEnv || 'live', os);
+    }
     
     function onBodyLoad() {   
       var os
@@ -58,7 +61,7 @@
 	      document.addEventListener("deviceready", onDeviceReady, false);	      
       } else {
         console.log("running in browser");
-        window.OpenPunch = _OpenPunch(window.env, os);
+        launch(os);
       }
     }
     
@@ -69,7 +72,7 @@
       else
         os = 'android';
       window.cordova.logger.log("running on mobile. device ready: " + [os, window.device.name, window.device.platform, window.device.version].join(' - '));
-      window.OpenPunch = _OpenPunch(window.env, os);        
+      launch(os);
     }
     
   </script>    
