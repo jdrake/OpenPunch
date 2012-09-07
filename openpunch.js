@@ -253,6 +253,9 @@ function _OpenPunch(env, os) {
     firstLast: function() {
       return this.get('first') + ' ' + this.get('last');
     },
+    firstLastInitial: function() {
+      return this.get('first') + ' ' + this.get('last')[0] + '.';
+    },
     actions: function() {
       return new self.Actions(self.actions.where({contactId: this.id}));
     },
@@ -1217,6 +1220,7 @@ function _OpenPunch(env, os) {
     helpers: function() {
       return {
         firstLast: _.bind(this.model.firstLast, this.model),
+        firstLastInitial: _.bind(this.model.firstLastInitial, this.model),
         totalCheckIns: _.bind(this.model.totalCheckIns, this.model),
         totalTime: _.bind(this.model.totalTime, this.model),
         balance: _.bind(this.model.balance, this.model),
@@ -1416,7 +1420,7 @@ function _OpenPunch(env, os) {
     },
     helpers: function() {
       return {
-        firstLast: _.bind(this.model.firstLast, this.model)
+        firstLastInitial: _.bind(this.model.firstLastInitial, this.model)
       };
     },
     render: function() {
@@ -1485,7 +1489,7 @@ function _OpenPunch(env, os) {
     },
     helpers: function() {
       return {
-        firstLast: _.bind(this.model.firstLast, this.model)
+        firstLastInitial: _.bind(this.model.firstLastInitial, this.model)
       };
     },
     render: function() {

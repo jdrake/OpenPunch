@@ -6,11 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
   <meta charset="utf-8">
 
-  <!-- Boostrap -->
-  <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet" />
-
-  <!-- Backbone Forms -->
+  <!-- 3rd party css -->
+  <link href="js/backbone-forms/templates/default.css" rel="stylesheet" type="text/css" />
   <link href="js/backbone-forms/templates/bootstrap.css" rel="stylesheet" type="text/css" />
 
   <!-- Custom CSS -->
@@ -102,9 +99,6 @@
         <!--form-->
         <div class="form-error alert alert-error hide"></div>
         <button type="submit" class="btn btn-large btn-primary">Sign In</button>
-        <p>
-          <a href="mailto:jonarc124@gmail.com?Subject=Request%20for%20OpenPunch%20Beta%20Invite">Request an invite</a>
-        </p>
       </div>
     </div><!--sign in-->
   </div><!--content-->
@@ -148,7 +142,7 @@
       </div>
     </div>
   </div><!--navbar-->
-  <div class="content container-fluid">
+  <div class="content has-footer container-fluid">
     <div class="row-fluid">
       <div class="span12">
         <!-- <p class="swipe-up-notice hide"><i class="icon-hand-down"></i> Swipe down to load past events</p> -->
@@ -211,15 +205,14 @@
       <div class="container">
         <ul class="nav">
           <li>
-            <a href="#events"><i class="icon-chevron-left icon-white"></i></a>
-          </li>
-          <li class="event-title">
-            <a class="brand" href="#events"><%= eventTitle(name) %></a>
+            <a href="#events" class="brand">
+              <i class="icon-chevron-left icon-white"></i> <%= eventTitle(name) %>
+            </a>
           </li>
         </ul>
         <ul class="nav pull-right">
           <li>
-            <a href="#events/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>
+            <a href="#events/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>
           </li>
         </ul>
       </div>
@@ -231,28 +224,54 @@
         <p class="date"><i class="icon-calendar"></i> <%= eventDate(dtStart) %> &middot; <%= eventTime(dtStart)  %> to <%= eventTime(dtEnd) %><p>
       </div>
     </div>
+    <% if (status=='past') { %>
     <div class="row-fluid">
-      <div class="action-buttons span12">
-        <a href="#events/<%= _id %>/contacts" class="btn btn-large">
-          <i class="icon-2x-list"></i>
-          <h3>Browse</h3>
-        </a>
-        <button class="init-scan btn btn-large">
-          <i class="icon-2x-qrcode"></i>
-          <h3>Scan ID</h3>
-        </button>
+      <div class="event-status span12">
+        <div class="alert alert-block alert-info">
+          <h3>Event finished</h3>
+          You can no longer check people into this event.
+        </div>
+      </div>
+    </div>
+    <% } else if (status=='future') { %>
+    <div class="row-fluid">
+      <div class="event-status span12">
+        <div class="alert alert-block">
+          <h3>Event coming soon</h3>
+          You can start checking people into this event once it begins.
+        </div>
       </div>
     </div><!--buttons-->
+    <% } else { %>
     <div class="row-fluid">
-      <table class="event-stats table table-bordered">
+      <div class="action-buttons span12">
+        <div class="btn-group">
+          <a href="#events/<%= _id %>/contacts" class="btn btn-large">
+            <i class="icon-list"></i> Browse
+            <!--<h3>Browse</h3>-->
+          </a>
+          <button class="init-scan btn btn-large">
+            <i class="icon-qrcode"></i> Scan ID
+            <!--<h3>Scan ID</h3>-->
+          </button>
+        </div>
+      </div>
+    </div><!--buttons-->
+    <% } %>
+    <div class="row-fluid">
+      <table class="event-stats table">
         <tbody>
         <tr>
           <td>Total Attendees</td>
-          <td><%= totalAttendees() %></td>
+          <td><%= totalAttendees %></td>
         </tr>
         <tr>
           <td>Last Check-In</td>
-          <td><%= lastAttendeeName() %></td>
+          <td><%= lastAttendeeName %></td>
+        </tr>
+        <tr>
+          <td>Cost</td>
+          <td><%= money(cost) %></td>
         </tr>
         </tbody>
       </table>
@@ -369,7 +388,7 @@
   <div class="content container-fluid">
     <div class="row-fluid">
       <div class="span12">
-        <ul class="contact-list nav nav-tabs nav-stacked">
+        <ul class="contact-list nav nav-pills nav-stacked">
           <!--contacts-->
         </ul>
       </div>
@@ -380,7 +399,7 @@
 <script id="event-contact-view-template" type="text/template">
   <a href="#index">
     <!-- <i class="status <%= statusIconClass() %>"></i> -->
-    <%= first %> <%= last %>
+    <span class="name"><%= first %> <%= last %></span>
     <i class="li-arrow icon-chevron-right"></i>
     <% if (lastSeenDate()) { %><span class="role label <%= lastSeenLabelClass() %>"><%= lastSeenDate() %></span><% } %>
   </a>
@@ -396,15 +415,14 @@
       <div class="container">
         <ul class="nav">
           <li>
-            <a href="#events"><i class="icon-chevron-left icon-white"></i></a>
-          </li>
-          <li class="event-title">
-            <a class="brand" href="#events/<%= _id %>"><%= eventTitle(name) %></a>
+            <a href="#events" class="brand">
+              <i class="icon-chevron-left icon-white"></i> <%= eventTitle(name) %>
+            </a>
           </li>
         </ul>
         <ul class="nav pull-right">
           <li>
-            <a href="#events/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>
+            <a href="#events/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>
           </li>
         </ul>
       </div>
@@ -461,7 +479,7 @@
       </div>
     </div>
   </div><!--navbar-->
-  <div class="content container-fluid">
+  <div class="content has-footer container-fluid">
     <div class="row-fluid">
       <div class="span12">
         <div class="delete-alert alert alert-success hide">
@@ -471,7 +489,7 @@
         <p class="list-placeholder-image list-placeholder">
           <img src="images/help-first-contact.png" alt="Create your first contact by clicking the plus sign" />
         </p>
-        <ul class="contact-list nav nav-tabs nav-stacked">
+        <ul class="contact-list nav nav-pills nav-stacked">
           <!--event list-->
         </ul>
       </div>
@@ -524,35 +542,49 @@
       <div class="container">
         <ul class="nav">
           <li>
-            <a href="#contacts"><i class="icon-chevron-left icon-white"></i></a>
-          </li>
-          <li class="title">
-            <a class="brand" href="#contacts"><%= firstLast() %></a>
-          </li>
-        </ul>
-        <ul class="nav pull-right">
-          <li>
-            <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>
+            <a href="#contacts" class="brand">
+              <i class="icon-chevron-left icon-white"></i> <%= firstLastInitial() %>
+            </a>
           </li>
         </ul>
+        <div class="btn-group pull-right">
+          <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
+            <i class="icon-plus icon-white"></i> $
+          </a>
+          <a href="#contacts/<%= _id %>/edit" class="btn">
+            <i class="icon-pencil"></i>
+          </a>
+        </div>
       </div>
     </div>
   </div><!--navbar-->
   <div class="content has-footer container-fluid">
     <div class="row-fluid">
-      <table class="contact-stats table table-bordered">
+      <table class="contact-stats table">
         <tbody>
+        <tr>
+          <td>First Name</td>
+          <td><%= first %></td>
+        </tr>
+        <tr>
+          <td>Last Name</td>
+          <td><%= last %></td>
+        </tr>
         <tr>
           <td>Role</td>
           <td><%= role %></td>
         </tr>
         <tr>
-          <td>Total Check-Ins</td>
+          <td>Check-Ins</td>
           <td><%= totalCheckIns() %></td>
         </tr>
         <tr>
-          <td>Total Activity Time</td>
+          <td>Activity Time</td>
           <td><%= totalTime() %></td>
+        </tr>
+        <tr>
+          <td>Balance</td>
+          <td class="<%= balanceClass() %>"><%= money(balance()) %></td>
         </tr>
         </tbody>
       </table>
@@ -564,6 +596,9 @@
         <ul class="nav footer-nav">
           <li class="active">
             <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
+          </li>
+          <li>
+            <a href="#contacts/<%= _id %>/transactions"><span>$</span><p>Transactions</p></a>
           </li>
           <li>
             <a href="#contacts/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
@@ -584,10 +619,10 @@
       <div class="container">
         <ul class="nav">
           <li>
-            <a href="#contacts"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
+            <a href="#contacts/<%= _id %>"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
           </li>
           <li class="title">
-            <a class="brand" href="#contacts">Edit Contact</a>
+            <a class="brand" href="#contacts/<%= _id %>">Edit Contact</a>
           </li>
         </ul>
         <ul class="nav pull-right">
@@ -649,6 +684,112 @@
 
 
 <!--
+  CONTACT TRANSACTIONS
+-->
+<script id="contact-transactions-view-template" type="text/template">
+  <div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+      <div class="container">
+        <ul class="nav">
+          <li>
+            <a href="#contacts" class="brand">
+              <i class="icon-chevron-left icon-white"></i> <%= firstLastInitial() %>
+            </a>
+          </li>
+        </ul>
+        <div class="btn-group pull-right">
+          <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
+            <i class="icon-plus icon-white"></i> $
+          </a>
+          <a href="#contacts/<%= _id %>/edit" class="btn">
+            <i class="icon-pencil"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div><!--navbar-->
+  <div class="content has-footer container-fluid">
+    <div class="row-fluid">
+      <div class="span12">
+        <div class="add-alert alert alert-success hide">
+          <button class="close" data-dismiss="alert">×</button>
+          <strong>Transaction added</strong>
+        </div>
+        <p class="list-placeholder">No transactions for this contact yet.</p>
+        <table class="transaction-list table">
+          <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Balance</th>
+          </tr>
+          </thead>
+          <tbody>
+          <!-- transaction <tr> -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div><!--content-->
+  <div class="bottom-bar navbar">
+    <div class="bottom-bar-inner navbar-inner">
+      <div class="container pagination-centered">
+        <ul class="nav footer-nav">
+          <li>
+            <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
+          </li>
+          <li class="active">
+            <a href="#contacts/<%= _id %>/transactions"><span>$</span><p>Transactions</p></a>
+          </li>
+          <li>
+            <a href="#contacts/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div><!--footer-->
+</script><!--contact transactions-->
+
+<script id="contact-transaction-tr-view-template" type="text/template">
+  <td><%= simpleDate(dtAdd) %></td>
+  <td><%= type %></td>
+  <td class="right <%= amountClass() %>"><%= money(ledgerAmount()) %></td>
+  <td class="right"><%= money(newBalance()) %></td>
+  <!--<td class="right"><i class="icon-chevron-right"></i></td>-->
+</script>
+
+
+<!--
+  Create transaction
+-->
+<script id="transaction-create-template" type="text/template">
+  <div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+      <div class="container">
+        <ul class="nav">
+          <li>
+            <a href="#contacts/<%= contactId %>"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
+          </li>
+          <li class="title">
+            <a class="brand" href="#contacts/<%= contactId %>">Create Transaction</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div><!--navbar-->
+  <div class="content container-fluid">
+    <div class="row-fluid">
+      <div class="form-container span12">
+        <!--form-->
+        <button type="submit" class="btn btn-large btn-primary">Save Transaction</button>
+      </div>
+    </div>
+  </div><!--content-->
+</script><!--page-->
+
+
+<!--
   CONTACT HISTORY
 -->
 <script id="contact-history-view-template" type="text/template">
@@ -657,17 +798,19 @@
       <div class="container">
         <ul class="nav">
           <li>
-            <a href="#contacts"><i class="icon-chevron-left icon-white"></i></a>
-          </li>
-          <li>
-            <a class="brand" href="#contacts"><%= firstLast() %></a>
-          </li>
-        </ul>
-        <ul class="nav pull-right">
-          <li>
-            <a href="#contacts/<%= _id %>/edit"><i class="icon-edit icon-white"></i></a>
+            <a href="#contacts" class="brand">
+              <i class="icon-chevron-left icon-white"></i> <%= firstLastInitial() %>
+            </a>
           </li>
         </ul>
+        <div class="btn-group pull-right">
+          <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
+            <i class="icon-plus icon-white"></i> $
+          </a>
+          <a href="#contacts/<%= _id %>/edit" class="btn">
+            <i class="icon-pencil"></i>
+          </a>
+        </div>
       </div>
     </div>
   </div><!--navbar-->
@@ -687,6 +830,9 @@
         <ul class="nav footer-nav">
           <li>
             <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
+          </li>
+          <li>
+            <a href="#contacts/<%= _id %>/transactions"><span>$</span><p>Transactions</p></a>
           </li>
           <li class="active">
             <a href="#contacts/<%= _id %>/history"><i class="icon-time icon-white"></i><p>History</p></a>

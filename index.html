@@ -205,10 +205,9 @@
         <div class="container">
           <ul class="nav">
             <li>
-              <a href="#events"><i class="icon-chevron-left icon-white"></i></a>
-            </li>
-            <li class="event-title">
-              <a class="brand" href="#events"><%= eventTitle(name) %></a>
+              <a href="#events" class="brand">
+                <i class="icon-chevron-left icon-white"></i> <%= eventTitle(name) %>
+              </a>
             </li>
           </ul>
           <ul class="nav pull-right">
@@ -246,14 +245,16 @@
       <% } else { %>
         <div class="row-fluid">
           <div class="action-buttons span12">
-            <a href="#events/<%= _id %>/contacts" class="btn btn-large">
-              <i class="icon-2x-list"></i>
-              <h3>Browse</h3>
-            </a>
-            <button class="init-scan btn btn-large">
-              <i class="icon-2x-qrcode"></i>
-              <h3>Scan ID</h3>
-            </button>
+            <div class="btn-group">
+              <a href="#events/<%= _id %>/contacts" class="btn btn-large">
+                <i class="icon-list"></i> Browse
+                <!--<h3>Browse</h3>-->
+              </a>
+              <button class="init-scan btn btn-large">
+                <i class="icon-qrcode"></i> Scan ID
+                <!--<h3>Scan ID</h3>-->
+              </button>
+            </div>
           </div>
         </div><!--buttons-->
       <% } %>
@@ -414,10 +415,9 @@
         <div class="container">
           <ul class="nav">
             <li>
-              <a href="#events"><i class="icon-chevron-left icon-white"></i></a>
-            </li>
-            <li class="event-title">
-              <a class="brand" href="#events/<%= _id %>"><%= eventTitle(name) %></a>
+              <a href="#events" class="brand">
+                <i class="icon-chevron-left icon-white"></i> <%= eventTitle(name) %>
+              </a>
             </li>
           </ul>
           <ul class="nav pull-right">
@@ -542,39 +542,44 @@
         <div class="container">
           <ul class="nav">
             <li>
-              <a href="#contacts"><i class="icon-chevron-left icon-white"></i></a>
-            </li>
-            <li class="title">
-              <a class="brand" href="#contacts"><%= firstLast() %></a>
-            </li>
-          </ul>
-          <ul class="nav pull-right">
-            <li>
-              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
-                <i class="icon-plus icon-white"></i> credit
+              <a href="#contacts" class="brand">
+                <i class="icon-chevron-left icon-white"></i> <%= firstLastInitial() %>
               </a>
             </li>
-            <li>
-              <a href="#contacts/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>
-            </li>
           </ul>
+          <div class="btn-group pull-right">
+            <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
+              <i class="icon-plus icon-white"></i> $
+            </a>
+            <a href="#contacts/<%= _id %>/edit" class="btn">
+              <i class="icon-pencil"></i>
+            </a>
+          </div>
         </div>
       </div>
-    </div><!--navbar-->    
+    </div><!--navbar-->
     <div class="content has-footer container-fluid">
       <div class="row-fluid">
         <table class="contact-stats table">
           <tbody>
             <tr>
+              <td>First Name</td>
+              <td><%= first %></td>
+            </tr>
+            <tr>
+              <td>Last Name</td>
+              <td><%= last %></td>
+            </tr>
+            <tr>
               <td>Role</td>
               <td><%= role %></td>
             </tr>
             <tr>
-              <td>Total Check-Ins</td>
+              <td>Check-Ins</td>
               <td><%= totalCheckIns() %></td>
             </tr>
             <tr>
-              <td>Total Activity Time</td>
+              <td>Activity Time</td>
               <td><%= totalTime() %></td>
             </tr>
             <tr>
@@ -687,22 +692,19 @@
         <div class="container">
           <ul class="nav">
             <li>
-              <a href="#contacts"><i class="icon-chevron-left icon-white"></i></a>
-            </li>
-            <li>
-              <a class="brand" href="#contacts"><%= firstLast() %></a>
-            </li>
-          </ul>
-          <ul class="nav pull-right">
-            <li>
-              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
-                <i class="icon-plus icon-white"></i> credit
+              <a href="#contacts" class="brand">
+                <i class="icon-chevron-left icon-white"></i> <%= firstLastInitial() %>
               </a>
             </li>
-            <li>
-              <a href="#contacts/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>
-            </li>
           </ul>
+          <div class="btn-group pull-right">
+            <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
+              <i class="icon-plus icon-white"></i> $
+            </a>
+            <a href="#contacts/<%= _id %>/edit" class="btn">
+              <i class="icon-pencil"></i>
+            </a>
+          </div>
         </div>
       </div>
     </div><!--navbar-->
@@ -796,22 +798,19 @@
         <div class="container">
           <ul class="nav">
             <li>
-              <a href="#contacts"><i class="icon-chevron-left icon-white"></i></a>
-            </li>
-            <li>
-              <a class="brand" href="#contacts"><%= firstLast() %></a>
-            </li>
-          </ul>
-          <ul class="nav pull-right">
-            <li>
-              <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
-                <i class="icon-plus icon-white"></i> credit
+              <a href="#contacts" class="brand">
+                <i class="icon-chevron-left icon-white"></i> <%= firstLastInitial() %>
               </a>
             </li>
-            <li>
-              <a href="#contacts/<%= _id %>/edit"><i class="icon-pencil icon-white"></i></a>
-            </li>
           </ul>
+          <div class="btn-group pull-right">
+            <a href="#contacts/<%= _id %>/transactions/new" class="add-credit btn btn-success">
+              <i class="icon-plus icon-white"></i> $
+            </a>
+            <a href="#contacts/<%= _id %>/edit" class="btn">
+              <i class="icon-pencil"></i>
+            </a>
+          </div>
         </div>
       </div>
     </div><!--navbar-->
