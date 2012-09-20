@@ -5,6 +5,9 @@ function _OpenPunch(env, os) {
   var self = {
     env: env,
     os: os,
+    hashes: {
+      sessionId: 'openpunch:sessionId'
+    },
     roles: [
       {
         value: 'participant',
@@ -48,14 +51,7 @@ function _OpenPunch(env, os) {
     };
     jqXHR.setRequestHeader("X-Requested-With", "XMLHttpRequest");
   });
-  
-  /*
-   * Cookie names
-   */
-  self.cookies = {
-    session: 'connect.sid'
-  };
-  
+
   /*
    * Base models and collections, depending on data source
    */
@@ -63,7 +59,8 @@ function _OpenPunch(env, os) {
   var MongoModel = Backbone.Model.extend({
     idAttribute: '_id'
   });
-  
+
+  // Salesforce
   var SFModel = Backbone.Model.extend({
     idAttribute: 'Id'
   });
@@ -265,7 +262,7 @@ function _OpenPunch(env, os) {
       };
     },
     ledgerAmount: function() {
-      return this.get('amount') * ((this.get('side')=='c') ? 1 : -1);
+      return this.get('amount') * ((this.get('side')==='c') ? 1 : -1);
     },
     amountClass: function() {
       var b = this.ledgerAmount();
@@ -377,7 +374,7 @@ function _OpenPunch(env, os) {
     allActions: function() {
       return new self.Actions(self.actions.filter(_.bind(function(action) {
         // This event, and contact still exists
-        return action.get('eventId') == this.id && self.contacts.get(action.get('contactId'));
+        return action.get('eventId') === this.id && self.contacts.get(action.get('contactId'));
       }, this)));
     },
     status: function() {
@@ -464,10 +461,10 @@ function _OpenPunch(env, os) {
         : null;
     },
     isCheckedIn: function() {
-      return this.status() == 'in';
+      return this.status() === 'in';
     },
     isCheckedOut: function() {
-      return this.status() == 'out';
+      return this.status() === 'out';
     },
     
     /*
@@ -586,6 +583,16 @@ function _OpenPunch(env, os) {
       self.contacts.fetch(options);
       self.actions.fetch(options);
       self.transactions.fetch(options);
+    },
+    setSessionId: function() {
+      if (this.get('sessionId'))
+        localStorage.setItem(self.hashes.sessionId, this.get('sessionId'));
+    },
+    getSessionId: function() {
+      return localStorage.getItem(self.hashes.sessionId);
+    },
+    clearSessionId: function() {
+      localStorage.removeItem(self.hashes.sessionId);
     }
   });
   
@@ -642,13 +649,15 @@ function _OpenPunch(env, os) {
         });
       }
     },
-    signInSuccess: function(model) {
-      console.log('signInSuccess: ' + JSON.stringify(model.toJSON()));
+    signInSuccess: function(account) {
+      console.log('signInSuccess: ' + JSON.stringify(account.toJSON()));
+      // Update local session ID
+      account.setSessionId();
       // Redirect
       self.router.navigate('loading', {trigger: true});
     },
-    signInError: function(model, resp) {
-      console.log('signInError: ' + resp.responseText || model);
+    signInError: function(account, resp) {
+      console.log('signInError: ' + resp.responseText || account);
       this.$el.find('.form-error').text(resp.responseText).removeClass('hide');
     }
   });
@@ -686,7 +695,7 @@ function _OpenPunch(env, os) {
       self.transactions.on('reset', this.dataFetched, this);
     },
     dataReady: function() {
-      return this.numLoaded == this.numToLoad;
+      return this.numLoaded === this.numToLoad;
     },
     dataFetched: function(coll) {
       console.log('collection loaded');
@@ -778,7 +787,7 @@ function _OpenPunch(env, os) {
       };
     },
     refresh: function(action) {
-      if (action.get('eventId')==this.model.id)
+      if (action.get('eventId')===this.model.id)
         this.render();
     },
     render: function() {
@@ -983,7 +992,7 @@ function _OpenPunch(env, os) {
   self.EventEditView = BaseFormView.extend({
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
-      if (self.os=='ios') {
+      if (self.os==='ios') {
         this.form = new Backbone.Form({
           model: new self.EventSchema({
             _id: this.model.id,
@@ -1021,7 +1030,7 @@ function _OpenPunch(env, os) {
       _.bindAll(this, 'eventCreateSuccess');
       this.model = new self.Event();
       this.form = new Backbone.Form({
-        model: (self.os=='ios')
+        model: (self.os==='ios')
           ? new self.EventSchema(this.model.toJSON())
           : new self.EventSchemaDetail(this.model.toJSON()),
         idPrefix: 'event-'
@@ -1133,7 +1142,7 @@ function _OpenPunch(env, os) {
     },
     render: function(action) {
       if (action)
-        if (!(action.get('eventId')==this.event.id && action.get('contactId')==this.model.id))
+        if (!(action.get('eventId')===this.event.id && action.get('contactId')===this.model.id))
           return;
       this.$el.html(this.template(_.extend(this.model.toJSON(), self.helpers, this.helpers(), {
         attendee: this.attendee.toJSON()
@@ -1208,7 +1217,7 @@ function _OpenPunch(env, os) {
       return self.helpers.relativeTime(this.model.get('dt'));
     },
     timestampLabelClass: function() {
-      return this.model.get('status')=='in' ? 'label-success' : 'label-important';
+      return this.model.get('status')==='in' ? 'label-success' : 'label-important';
     },
     helpers: function() {
       return {
@@ -1355,32 +1364,32 @@ function _OpenPunch(env, os) {
 
   self.ContactSchema = Backbone.Model.extend({
     schema: {
-      first:          {
-                        title: 'First name',
-                        validators: ['required'],
-                        fieldClass: 'contact-first',
-                        editorAttrs: {
-                          placeholder: 'e.g. Jane'
-                        },
-                        editorClass: 'span12'
-                      },
-      last:           {
-                        title: 'Last name',
-                        validators: ['required'],
-                        fieldClass: 'contact-last',
-                        editorAttrs: {
-                          placeholder: 'e.g. Smith'
-                        },
-                        editorClass: 'span12'
-                      },
-      role:           {
-                        title: 'Role',
-                        type: 'Select',
-                        options: _.pluck(self.roles, 'value'),
-                        validators: ['required'],
-                        fieldClass: 'contact-role',
-                        editorClass: 'span12'
-                      }
+      first: {
+        title: 'First name',
+        validators: ['required'],
+        fieldClass: 'contact-first',
+        editorAttrs: {
+          placeholder: 'e.g. Jane'
+        },
+        editorClass: 'span12'
+      },
+      last: {
+        title: 'Last name',
+        validators: ['required'],
+        fieldClass: 'contact-last',
+        editorAttrs: {
+          placeholder: 'e.g. Smith'
+        },
+        editorClass: 'span12'
+      },
+      role: {
+        title: 'Role',
+        type: 'Select',
+        options: _.pluck(self.roles, 'value'),
+        validators: ['required'],
+        fieldClass: 'contact-role',
+        editorClass: 'span12'
+      }
     }
   });
 
@@ -1485,7 +1494,7 @@ function _OpenPunch(env, os) {
     },
     changeSide: function(form, titleEditor) {
       // Update ledger side
-      this.model.set({side: (titleEditor.getValue()=='Adhoc Charge') ? 'd' : 'c'}, {silent: true});
+      this.model.set({side: (titleEditor.getValue()==='Adhoc Charge') ? 'd' : 'c'}, {silent: true});
       return;
     },
     commitForm: function(e) {
@@ -1641,7 +1650,7 @@ function _OpenPunch(env, os) {
       return self.helpers.relativeTime(this.model.get('dt'));
     },
     statusVerb: function() {
-      return (this.status=='in') ? 'into' : 'out of';
+      return (this.status==='in') ? 'into' : 'out of';
     },
     helpers: function() {
       return {
@@ -1710,6 +1719,7 @@ function _OpenPunch(env, os) {
     },
     loadExistingPage: function(id, viewClass) {
       $('.page').addClass('hide');
+      $('.leave-open').removeClass('open');
       this.renderedViews[viewClass][id].render().$el.removeClass('hide');
     },
 
@@ -1752,40 +1762,39 @@ function _OpenPunch(env, os) {
         // Account signed in, move along...
         console.log('account already fetched');
         self.router.navigate('loading', {trigger: true});
-//      } else if (sessionId) {
-//        // Session cookie set, need to retrieve account then move along...
-//        console.log('account cookie set. need to fetch');
-//        self.account.setUrlRoot('session');
-//        self.account.fetch({
-//          data: {sessionId: sessionId},
-//          success: function(model, resp) {
-//            // Reset account url
-//            self.account.setUrlRoot('account');
-//            // Set session ID
-//            self.account.set({sessionId: sessionId}, {silent: true});
-//            console.log('account', self.account.toJSON());
-//            // Load data
-//            self.router.navigate('loading', {trigger: true});
-//          },
-//          error: function(model, resp) {
-//            // Remove stale cookie
-//            $.cookie(self.cookies.session, null);
-//            console.error(resp.responseText);
-//            // Reset account URL
-//            self.account.setUrlRoot('account');
-//            // Go to sign in page again
-//            self.router.navigate('account/sign-in', {trigger: true});
-//          }
-//        });
       } else {
-        // Make user sign in
-        var id = 0;
-        $('.page').addClass('hide');
-        if (_.has(this.renderedViews.SignInView, id)) {
-          this.renderedViews.SignInView[id].$el.removeClass('hide');
+        // See if locally stored session ID is still valid
+        var localSessionId = self.account.getSessionId();
+        if (localSessionId) {
+          // Session cookie set, need to retrieve account then move along...
+          console.log('Fetch account using local session id');
+          self.account.fetch({
+            data: {sessionId: localSessionId},
+            success: function(model, resp) {
+              // Set session ID
+              self.account.setSessionId();
+              // Load data
+              self.router.navigate('loading', {trigger: true});
+            },
+            error: function(model, resp) {
+              // Remove stale session ID
+              self.account.clearSessionId();
+              console.log(resp.responseText);
+              // Try sign in page again
+              self.router.navigate('account/sign-in', {trigger: true});
+            }
+          });
         } else {
-          this.renderViews(id, ['SignInView']);
-          this.renderedViews.SignInView[id].$el.removeClass('hide');
+          // Make user sign in
+          console.log('No local session ID. Sign in');
+          var id = 0;
+          $('.page').addClass('hide');
+          if (_.has(this.renderedViews.SignInView, id)) {
+            this.renderedViews.SignInView[id].$el.removeClass('hide');
+          } else {
+            this.renderViews(id, ['SignInView']);
+            this.renderedViews.SignInView[id].$el.removeClass('hide');
+          }
         }
       }
     },
