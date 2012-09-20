@@ -24,7 +24,7 @@
   <script src="js/jquery/jquery.cookie.js" type="text/javascript"></script>
 
   <!-- Bootstrap -->
-  <script src="bootstrap/js/bootstrap-2.0.3.min.js"></script>
+  <script src="bootstrap/js/bootstrap.min.js"></script>
   <script src="bootstrap/js/bootstrap-typeahead-ajax.js"></script>
 
   <!-- Backbone -->
@@ -471,14 +471,29 @@
       <div class="navbar-inner">
         <div class="container">
           <a class="brand" href="#contacts">Contacts</a>
-          <ul class="nav pull-right">
-            <!-- <li>
-              <a href="#contacts/search"><i class="icon-search icon-white"></i></a>              
-            </li> -->
+          <div class="btn-group pull-right leave-open">
+            <a id="filter-contacts" href="#" role="button" class="btn">
+              <i class="icon-filter"></i>
+            </a>
+            <ul class="filter-menu dropdown-menu">
+              <li class="filter-container">
+                <!-- filters -->
+              </li>
+              <li class="divider"></li>
+              <li>
+                <button class="filter-button-close btn btn-block btn-danger">Close</button>
+              </li>
+            </ul>
+            <a href="#contacts/new" class="btn">
+              <i class="icon-plus"></i>
+            </a>
+          </div>
+
+          <!--<ul class="nav pull-right">
             <li>
-              <a href="#contacts/new"><i class="icon-plus icon-white"></i></a>              
+              <a href="#contacts/new"><i class="icon-plus icon-white"></i></a>
             </li>
-          </ul>
+          </ul>-->
         </div>
       </div>
     </div><!--navbar-->    
@@ -525,6 +540,18 @@
       </div>
     </div><!--footer-->
   </div><!--page-->
+
+  <script id="filter-menu-template" type="text/template">
+    <li>
+      <% _.each(filters, function(filter) { %>
+        <button class="filter-button btn btn-block" data-toggle="button" data-value="<%= filter.value %>"><%= filter.label %></button>
+      <% }) %>
+    </li>
+    <li class="divider"></li>
+    <li>
+      <button class="filter-button-close btn btn-block btn-danger">Close</button>
+    </li>
+  </script>
   
   <script id="contact-li-view-template" type="text/template">
     <a href="#contacts/<%= _id %>">

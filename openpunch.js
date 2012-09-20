@@ -4,7 +4,29 @@ function _OpenPunch(env, os) {
   // Global var to be filled with models, data, etc. 
   var self = {
     env: env,
-    os: os
+    os: os,
+    roles: [
+      {
+        value: 'participant',
+        label: 'Participants',
+        active: true
+      },
+      {
+        value: 'tutor',
+        label: 'Tutors',
+        active: true
+      },
+      {
+        value: 'parent',
+        label: 'Parents',
+        active: true
+      },
+      {
+        value: 'guest',
+        label: 'Guests',
+        active: true
+      }
+    ]
   };
 
   var apiRoots = {
@@ -15,6 +37,7 @@ function _OpenPunch(env, os) {
   };
 
   self.apiRoot = apiRoots[self.env];
+
 
   // Hook into jquery
   // Use withCredentials to send the server cookies
@@ -54,7 +77,7 @@ function _OpenPunch(env, os) {
       return response.records;
     }
   });
-  
+
   var OpenPunchCollection = MongoCollection;
   
   var BaseFormView = Backbone.View.extend({
@@ -71,12 +94,17 @@ function _OpenPunch(env, os) {
       return _.template($('#' + this.options.idPrefix + 'template').html()); 
     },
     events: {
-      'click button[type=submit]': 'commitForm'
+      'click button[type=submit]': 'commitForm',
+      'keyup': 'commitFormOnEnter'
     },
     render: function() {
       this.$el.html(this.template()(_.extend(this.model.toJSON(), self.helpers)));
       this.$el.find('.form-container').prepend(this.form.render().el);
       return this;
+    },
+    commitFormOnEnter: function(e) {
+      if (e.keyCode === 13)
+        this.commitForm(e);
     },
     commitForm: function(e) {
       e.preventDefault();
@@ -203,8 +231,31 @@ function _OpenPunch(env, os) {
 
 
   /*
-  Transaction
+  Filters for use in different list views
    */
+
+  self.Filter = Backbone.Model.extend();
+
+  self.Filters = Backbone.Collection.extend({model: self.Filter});
+
+  self.FilterGroup = Backbone.Model.extend({
+    initialize: function() {
+      this.set('filters', new self.Filters(this.get('filters')));
+    },
+    activeValues: function() {
+      return _.map(this.get('filters').where({active: true}), function(f) {
+        return f.get('value');
+      });
+    },
+    pass: function(model) {
+      return _.indexOf(this.activeValues(), model.get(this.get('attr'))) !== -1;
+    }
+  });
+
+
+  /*
+ Transaction
+  */
   self.Transaction = OpenPunchModel.extend({
     defaults: function() {
       return {
@@ -568,7 +619,10 @@ function _OpenPunch(env, os) {
       BaseFormView.prototype.initialize.call(this);
       _.bindAll(this, 'signInSuccess', 'signInError');
       this.form = new Backbone.Form({
-        model: new self.SignInSchema(),
+        model: new self.SignInSchema({
+          email: 'jonarc124@gmail.com',
+          password: 'drakejn3'
+        }),
         idPrefix: 'signin-'
       });
     },
@@ -1169,6 +1223,34 @@ function _OpenPunch(env, os) {
 
   });
 
+  /*
+  Filter toggle view
+   */
+  self.FilterToggleView = Backbone.View.extend({
+    tagName: 'button',
+    attributes: function() {
+      return {
+        'data-toggle': 'button',
+        'data-value': this.model.get('value'),
+        'class': 'filter-button btn btn-block ' + (this.model.get('active') ? 'active btn-success' : '')
+      };
+    },
+    events: {
+      'click': 'toggleFilter'
+    },
+    initialize: function() {
+      _.bindAll(this, 'toggleFilter');
+      this.parent = this.options.parent;
+    },
+    render: function() {
+      this.$el.text(this.model.get('label'));
+      return this;
+    },
+    toggleFilter: function(e) {
+      this.model.set('active', !this.model.get('active'));
+      this.$el.toggleClass('btn-success', this.model.get('active'));
+    }
+  });
 
   /*
    * Contacts
@@ -1176,12 +1258,19 @@ function _OpenPunch(env, os) {
 
   self.ContactsView = Backbone.View.extend({
     el: '#contacts',
+    events: {
+      'click #filter-contacts': 'openFilters',
+      'click .filter-button-close': 'closeFilters'
+    },
     initialize: function() {
       _.bindAll(this, 'renderContact');
       self.contacts.on('reset', this.renderContacts, this);
+      this.rolesFilter = new self.FilterGroup({filters: self.roles, attr: 'role'});
     },
     render: function() {
       this.list = this.$el.find('.contact-list').empty();
+      this.filterContainer = this.$el.find('.filter-container').empty();
+      this.rolesFilter.get('filters').each(this.renderFilter, this);
       this.renderContacts(self.contacts);
       return this;
     },
@@ -1192,23 +1281,47 @@ function _OpenPunch(env, os) {
       contacts.each(this.renderContact);
     },
     renderContact: function(contact) {
-      var view = new self.ContactLiView({model: contact});
+      var view = new self.ContactLiView({
+        model: contact,
+        parent: this
+      });
       this.list.append(view.render().el);
+    },
+    renderFilter: function(filter) {
+      var view = new self.FilterToggleView({
+        model: filter,
+        parent: this
+      });
+      this.filterContainer.append(view.render().el);
     },
     showDeleteAlert: function() {
       this.$el.find('.delete-alert').removeClass('hide');
       _.delay(_.bind(function() {
         this.$el.find('.delete-alert').addClass('hide');
       }, this), 3000);
+    },
+    openFilters: function(e) {
+      e.preventDefault();
+      $(e.currentTarget).parent().addClass('open');
+    },
+    closeFilters: function(e) {
+      $(e.currentTarget).parents('.open').removeClass('open');
     }
   });
 
   self.ContactLiView = Backbone.View.extend({
     tagName: 'li',
     template: _.template($('#contact-li-view-template').html()),
+    initialize: function() {
+      this.options.parent.rolesFilter.get('filters').on('change:active', this.updateFilter, this);
+    },
     render: function() {
       this.$el.html(this.template(_.extend(this.model.toJSON(), self.helpers)));
+      this.updateFilter();
       return this;
+    },
+    updateFilter: function() {
+      this.$el.toggleClass('hide', !this.options.parent.rolesFilter.pass(this.model));
     }
   });
 
@@ -1263,7 +1376,7 @@ function _OpenPunch(env, os) {
       role:           {
                         title: 'Role',
                         type: 'Select',
-                        options: ['participant', 'tutor', 'family', 'guest'],
+                        options: _.pluck(self.roles, 'value'),
                         validators: ['required'],
                         fieldClass: 'contact-role',
                         editorClass: 'span12'
