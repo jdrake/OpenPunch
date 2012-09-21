@@ -248,6 +248,12 @@ function _OpenPunch(env, os) {
     },
     pass: function(model) {
       return _.indexOf(this.activeValues(), model.get(this.get('attr'))) !== -1;
+    },
+    isActive: function() {
+      // Filter group is active if any filters are inactive
+      return this.get('filters').any(function(f) {
+        return f.get('active') === false;
+      });
     }
   });
 
@@ -1282,18 +1288,20 @@ function _OpenPunch(env, os) {
   self.ContactsView = Backbone.View.extend({
     el: '#contacts',
     events: {
-      'click #filter-contacts': 'openFilters',
+      'click #filter-contacts': 'toggleFilterDialog',
       'click .filter-button-close': 'closeFilters'
     },
     initialize: function() {
       _.bindAll(this, 'renderContact');
       self.contacts.on('reset', this.renderContacts, this);
       this.rolesFilter = new self.FilterGroupRoles();
+      this.rolesFilter.get('filters').on('change:active', this.toggleFilterNotification, this);
     },
     render: function() {
       this.list = this.$el.find('.contact-list').empty();
       this.filterContainer = this.$el.find('.filter-container').empty();
       this.rolesFilter.get('filters').each(this.renderFilter, this);
+      this.toggleFilterNotification();
       this.renderContacts(self.contacts);
       return this;
     },
@@ -1323,12 +1331,15 @@ function _OpenPunch(env, os) {
         this.$el.find('.delete-alert').addClass('hide');
       }, this), 3000);
     },
-    openFilters: function(e) {
+    toggleFilterDialog: function(e) {
       e.preventDefault();
-      $(e.currentTarget).parent().addClass('open');
+      $(e.currentTarget).parent().toggleClass('open');
     },
     closeFilters: function(e) {
       $(e.currentTarget).parents('.open').removeClass('open');
+    },
+    toggleFilterNotification: function() {
+      this.$el.find('#filter-contacts').toggleClass('btn-warning', this.rolesFilter.isActive());
     }
   });
 
