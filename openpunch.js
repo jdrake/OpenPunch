@@ -231,14 +231,16 @@ function _OpenPunch(env, os) {
   Filters for use in different list views
    */
 
-  self.Filter = Backbone.Model.extend();
+  self.Filter = Backbone.Model.extend({
+    idAttribute: 'value'
+  });
 
-  self.Filters = Backbone.Collection.extend({model: self.Filter});
+  self.Filters = Backbone.Collection.extend({
+    model: self.Filter,
+    localStorage: new Backbone.LocalStorage("openpunch:filters")
+  });
 
   self.FilterGroup = Backbone.Model.extend({
-    initialize: function() {
-      this.set('filters', new self.Filters(this.get('filters')));
-    },
     activeValues: function() {
       return _.map(this.get('filters').where({active: true}), function(f) {
         return f.get('value');
@@ -249,6 +251,49 @@ function _OpenPunch(env, os) {
     }
   });
 
+  self.FilterGroupRoles = self.FilterGroup.extend({
+    defaults: {
+      filters: new self.Filters(self.roles),
+      attr: 'role'
+    },
+    initialize: function() {
+      this.get('filters').each(this.syncFilter, this);
+    },
+    syncFilter: function(filter) {
+      filter.fetch({
+        error: function(model, resp) {
+          if (resp === 'Record not found')
+            model.save();
+        }
+      });
+    }
+  });
+
+  self.FilterToggleView = Backbone.View.extend({
+    tagName: 'button',
+    attributes: function() {
+      return {
+        'data-toggle': 'button',
+        'data-value': this.model.get('value'),
+        'class': 'filter-button btn btn-block ' + (this.model.get('active') ? 'active btn-success' : '')
+      };
+    },
+    events: {
+      'click': 'toggleFilter'
+    },
+    initialize: function() {
+      _.bindAll(this, 'toggleFilter');
+      this.parent = this.options.parent;
+    },
+    render: function() {
+      this.$el.text(this.model.get('label'));
+      return this;
+    },
+    toggleFilter: function(e) {
+      this.model.save('active', !this.model.get('active'));
+      this.$el.toggleClass('btn-success', this.model.get('active'));
+    }
+  });
 
   /*
  Transaction
@@ -558,9 +603,6 @@ function _OpenPunch(env, os) {
   
   self.Account = OpenPunchModel.extend({
     urlRoot: self.apiRoot + 'account',
-    setUrlRoot: function(urlPiece) {
-      this.urlRoot = self.apiRoot + urlPiece;
-    },
     meta: function() {
       return {
         accountId: this.id,
@@ -1232,34 +1274,6 @@ function _OpenPunch(env, os) {
 
   });
 
-  /*
-  Filter toggle view
-   */
-  self.FilterToggleView = Backbone.View.extend({
-    tagName: 'button',
-    attributes: function() {
-      return {
-        'data-toggle': 'button',
-        'data-value': this.model.get('value'),
-        'class': 'filter-button btn btn-block ' + (this.model.get('active') ? 'active btn-success' : '')
-      };
-    },
-    events: {
-      'click': 'toggleFilter'
-    },
-    initialize: function() {
-      _.bindAll(this, 'toggleFilter');
-      this.parent = this.options.parent;
-    },
-    render: function() {
-      this.$el.text(this.model.get('label'));
-      return this;
-    },
-    toggleFilter: function(e) {
-      this.model.set('active', !this.model.get('active'));
-      this.$el.toggleClass('btn-success', this.model.get('active'));
-    }
-  });
 
   /*
    * Contacts
@@ -1274,7 +1288,7 @@ function _OpenPunch(env, os) {
     initialize: function() {
       _.bindAll(this, 'renderContact');
       self.contacts.on('reset', this.renderContacts, this);
-      this.rolesFilter = new self.FilterGroup({filters: self.roles, attr: 'role'});
+      this.rolesFilter = new self.FilterGroupRoles();
     },
     render: function() {
       this.list = this.$el.find('.contact-list').empty();
