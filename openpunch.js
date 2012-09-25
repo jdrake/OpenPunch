@@ -1,7 +1,7 @@
 
 function _OpenPunch(env, os) {
   
-  // Global var to be filled with models, data, etc. 
+  // Global var to be filled with models, data, etc.
   var self = {
     env: env,
     os: os,
@@ -33,7 +33,7 @@ function _OpenPunch(env, os) {
   };
 
   var apiRoots = {
-    dev: 'http://127.0.0.1:3032/api/',
+    dev: 'http://127.0.0.1:5000/api/',
     network: 'http://192.168.0.101:3032/api/',
     staging: 'http://dev.openpunchapp.com/api/',
     live: 'http://openpunchapp.com/api/'
@@ -57,7 +57,10 @@ function _OpenPunch(env, os) {
    */
   
   var MongoModel = Backbone.Model.extend({
-    idAttribute: '_id'
+    idAttribute: '_id',
+    parse: function(resp) {
+      return resp.records ? resp.records[0] : resp;
+    }
   });
 
   // Salesforce
@@ -67,7 +70,11 @@ function _OpenPunch(env, os) {
   
   var OpenPunchModel = MongoModel;
   
-  var MongoCollection = Backbone.Collection;
+  var MongoCollection = Backbone.Collection.extend({
+    parse: function(resp) {
+      return resp.records || [];
+    }
+  });
   
   var SFCollection = Backbone.Collection.extend({
     parse: function(response) {
@@ -84,11 +91,11 @@ function _OpenPunch(env, os) {
     attributes: function() {
       return {
         id: this.options.idPrefix + ((this.model) ? this.model.id : this.cid),
-        class: this.options.idPrefix + 'page page hide'
+        'class': this.options.idPrefix + 'page page hide'
       };
     },
-    template: function() { 
-      return _.template($('#' + this.options.idPrefix + 'template').html()); 
+    template: function() {
+      return _.template($('#' + this.options.idPrefix + 'template').html());
     },
     events: {
       'click button[type=submit]': 'commitForm',
@@ -333,6 +340,9 @@ function _OpenPunch(env, os) {
       return _.reduce(this.pastTransactions(), function(memo, t) {
         return memo + t.ledgerAmount();
       }, this.ledgerAmount());
+    },
+    event: function() {
+      return (this.get('type')==='Event Fee' && this.get('eventId')) ? self.events.get(this.get('eventId')) : null;
     }
   });
 
@@ -390,7 +400,7 @@ function _OpenPunch(env, os) {
       });
       // dtOut - dtIn, Hours
       var tt = _.reduce(groups, function(memo, group) {
-        if (group.length != 2)
+        if (group.length !== 2)
           return memo;
         else
           return memo + Math.abs(new XDate(group[1].get('dt')).diffHours(group[0].get('dt')));
@@ -444,7 +454,7 @@ function _OpenPunch(env, os) {
     totalAttendees: function() {
       var checkIns = this.allActions().where({status: 'in'})
         , contactIds = _.map(checkIns, function(action){ return action.get('contactId'); })
-        , uniqIds = _.uniq(contactIds)
+        , uniqIds = _.uniq(contactIds);
       return uniqIds.length;
     },
     lastAttendeeName: function() {
@@ -470,7 +480,7 @@ function _OpenPunch(env, os) {
     defaults: function() {
       return {
         attendees: new self.Attendees()
-      }
+      };
     },
     comparator: function(event) {
       return -new XDate(event.get('dtStart')).getTime();
@@ -482,7 +492,7 @@ function _OpenPunch(env, os) {
   
   /*
    * Attendee
-   */ 
+   */
   
   self.Attendee = OpenPunchModel.extend({
     urlRoot: self.apiRoot + 'attendees',
@@ -499,7 +509,7 @@ function _OpenPunch(env, os) {
      */
     actions: function() {
       return new self.Actions(self.actions.where({
-        eventId: this.get('eventId'), 
+        eventId: this.get('eventId'),
         contactId: this.get('contactId')
       }));
     },
@@ -507,9 +517,7 @@ function _OpenPunch(env, os) {
       return this.actions().first();
     },
     status: function() {
-      return (this.latestAction())
-        ? this.latestAction().get('status')
-        : null;
+      return (this.latestAction()) ? this.latestAction().get('status') : null;
     },
     isCheckedIn: function() {
       return this.status() === 'in';
@@ -596,7 +604,7 @@ function _OpenPunch(env, os) {
     model: self.Action,
     url: self.apiRoot + 'actions',
     comparator: function(model) {
-      return -1 * new XDate(model.get('dt')).getTime(); 
+      return -1 * new XDate(model.get('dt')).getTime();
     }
   });
   
@@ -605,7 +613,7 @@ function _OpenPunch(env, os) {
   
   /*
    * User account
-   */ 
+   */
   
   self.Account = OpenPunchModel.extend({
     urlRoot: self.apiRoot + 'account',
@@ -640,6 +648,7 @@ function _OpenPunch(env, os) {
       return localStorage.getItem(self.hashes.sessionId);
     },
     clearSessionId: function() {
+      this.unset('sessionId', {silent: true});
       localStorage.removeItem(self.hashes.sessionId);
     }
   });
@@ -648,17 +657,17 @@ function _OpenPunch(env, os) {
   
   /*
    * Sign In
-   */ 
+   */
    
   self.SignInSchema = Backbone.Model.extend({
     schema: {
-      email: { 
+      email: {
         title: 'Email',
-        validators: ['required', 'email'], 
+        validators: ['required', 'email'],
         fieldClass: 'signin-email',
         editorClass: 'span12'
       },
-      password: { 
+      password: {
         title: 'Password',
         type: 'Password',
         validators: ['required'],
@@ -868,7 +877,7 @@ function _OpenPunch(env, os) {
       }
     },
     scanError: function(error) {
-      alert("scanning failed: " + error)
+      alert("scanning failed: " + error);
     },
 
     /*
@@ -1011,7 +1020,7 @@ function _OpenPunch(env, os) {
     attributes: function() {
       return {
         id: this.options.idPrefix + 'modal-' + this.model.id,
-        class: this.options.idPrefix + 'modal modal'
+        'class': this.options.idPrefix + 'modal modal'
       };
     },
     template: function() {
@@ -1078,9 +1087,7 @@ function _OpenPunch(env, os) {
       _.bindAll(this, 'eventCreateSuccess');
       this.model = new self.Event();
       this.form = new Backbone.Form({
-        model: (self.os==='ios')
-          ? new self.EventSchema(this.model.toJSON())
-          : new self.EventSchemaDetail(this.model.toJSON()),
+        model: (self.os==='ios') ? new self.EventSchema(this.model.toJSON()) : new self.EventSchemaDetail(this.model.toJSON()),
         idPrefix: 'event-'
       });
     },
@@ -1126,12 +1133,10 @@ function _OpenPunch(env, os) {
     },
     renderEventContact: function(contact) {
       var attendees = this.model.get('attendees').where({contactId: contact.id})
-        , attendee = (attendees.length>0)
-          ? attendees[0]
-          : new self.Attendee({
-              contactId: contact.id,
-              eventId: this.model.id
-            });
+        , attendee = (attendees.length>0) ? attendees[0] : new self.Attendee({
+            contactId: contact.id,
+            eventId: this.model.id
+          });
       var view = new self.EventContactLiView({
         model: contact,
         event: this.model,
@@ -1520,7 +1525,6 @@ function _OpenPunch(env, os) {
     changeSide: function(form, titleEditor) {
       // Update ledger side
       this.model.set({side: (titleEditor.getValue()==='Adhoc Charge') ? 'd' : 'c'}, {silent: true});
-      return;
     },
     commitForm: function(e) {
       e.preventDefault();
@@ -1547,7 +1551,7 @@ function _OpenPunch(env, os) {
       // Go to new contact transactions list
       self.router.navigate('contacts/' + model.get('contactId') + '/transactions', {trigger: true});
       // Show alert
-      self.router.renderedViews['ContactTransactionsView'][model.get('contactId')].showAddAlert();
+      self.router.renderedViews.ContactTransactionsView[model.get('contactId')].showAddAlert();
     },
     transactionCreateError: function(model, resp) {
       console.log(resp.responseText);
@@ -1601,7 +1605,6 @@ function _OpenPunch(env, os) {
     tagName: 'tr',
     template: _.template($('#contact-transaction-tr-view-template').html()),
     initialize: function() {
-
     },
 
     /*
@@ -1706,7 +1709,6 @@ function _OpenPunch(env, os) {
 
   self.Workspace = Backbone.Router.extend({
     initialize: function() {
-
     },
 
     /*
@@ -1948,7 +1950,7 @@ function _OpenPunch(env, os) {
         event.destroy({
           headers: self.account.meta(),
           success: _.bind(function() {
-            this.renderedViews['EventsView'][0].showDeleteAlert();
+            this.renderedViews.EventsView[0].showDeleteAlert();
             self.router.navigate('events', {trigger: true});
           }, this),
           error: function(model, resp) {
@@ -2041,7 +2043,7 @@ function _OpenPunch(env, os) {
         contact.destroy({
           headers: self.account.meta(),
           success: _.bind(function() {
-            this.renderedViews['ContactsView'][0].showDeleteAlert();
+            this.renderedViews.ContactsView[0].showDeleteAlert();
             self.router.navigate('contacts', {trigger: true});
           }, this),
           error: function(model, resp) {
@@ -2110,4 +2112,4 @@ function _OpenPunch(env, os) {
   
   return self;
   
-};
+}
