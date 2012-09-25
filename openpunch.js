@@ -135,11 +135,11 @@ function _OpenPunch(env, os) {
   
   self.helpers = {
     eventTime: function(d) {
-      return new XDate(d).toString('h:mmtt');
+      return new XDate(d, true).addHours(-5).toString('h:mmtt');
     },
     eventDate: function(dt) {
-      var now = new XDate()
-        , date = new XDate(dt)
+      var now = new XDate(true)
+        , date = new XDate(dt, true)
         , y0 = now.getFullYear()
         , m0 = now.getMonth()
         , d0 = now.getDate()
@@ -158,20 +158,20 @@ function _OpenPunch(env, os) {
         else
           return 'Yesterday';
       } else {
-        return date.toString('ddd MMM d, yyyy');
+        return date.addHours(-5).toString('ddd MMM d, yyyy');
       }
     },
     eventTitle: function(name) {
       return _.string.prune(name, 25);
     },
     relativeTime: function(d) {
-      var date = new XDate(d)
-        , now = new XDate()
+      var date = new XDate(d, true)
+        , now = new XDate(true)
         , hrsAgo = date.diffHours(now)
         , minAgo = date.diffMinutes(now)
         , secAgo = date.diffSeconds(now);
       if (hrsAgo > 12)
-        return date.toString('MMM d \'&middot\' h:mm tt');
+        return date.addHours(-5).toString('MMM d \'&middot\' h:mm tt');
       else if (hrsAgo > 1)
         return [Math.round(hrsAgo), (hrsAgo > 2) ? 'hours' : 'hour', 'ago'].join(' ');
       else if (minAgo > 1)
@@ -184,35 +184,35 @@ function _OpenPunch(env, os) {
     datePickerFormats: {
       browser: {
         date: function(dt) {
-          return new XDate(dt).toString('yyyy-MM-dd');
+          return new XDate(dt, true).addHours(-5).toString('yyyy-MM-dd');
         },
         time: function(dt) {
-          return new XDate(dt).toString('H:mm');
+          return new XDate(dt, true).addHours(-5).toString('H:mm');
         },
         datetime: function(dt) {
-          return new XDate(dt).toString('yyyy-MM-dd HH:mm');
+          return new XDate(dt, true).addHours(-5).toString('yyyy-MM-dd HH:mm');
         }
       },
       ios: {
         date: function(dt) {
-          return new XDate(dt).toString('yyyy-MM-dd');
+          return new XDate(dt, true).addHours(-5).toString('yyyy-MM-dd');
         },
         time: function(dt) {
-          return new XDate(dt).toString('HH:mm');
+          return new XDate(dt, true).addHours(-5).toString('HH:mm');
         },
         datetime: function(dt) {
-          return new XDate(dt).toISOString();
+          return new XDate(dt, true).toISOString();
         }
       },
       android: {
         date: function(dt) {
-          return new XDate(dt).toString('yyyy-MM-dd');
+          return new XDate(dt, true).addHours(-5).toString('yyyy-MM-dd');
         },
         time: function(dt) {
-          return new XDate(dt).toString('HH:mm');
+          return new XDate(dt, true).addHours(-5).toString('HH:mm');
         },
         datetime: function(dt) {
-          return new XDate(dt).toISOString();
+          return new XDate(dt, true).toISOString();
         }
       }
     },
@@ -229,7 +229,7 @@ function _OpenPunch(env, os) {
         return _.string.sprintf('-$%.2f', Math.abs(d));
     },
     simpleDate: function(dt) {
-      return new XDate(dt).toString('MMM d');
+      return new XDate(dt, true).addHours(-5).toString('MMM d');
     }
   };
 
@@ -333,7 +333,7 @@ function _OpenPunch(env, os) {
     },
     pastTransactions: function() {
       return this.collection.filter(function(t) {
-        return new XDate(t.get('dtAdd'))<new XDate(this.get('dtAdd')) && t.get('contactId')===this.get('contactId');
+        return new XDate(t.get('dtAdd'), true) < new XDate(this.get('dtAdd'), true) && t.get('contactId')===this.get('contactId');
       }, this);
     },
     newBalance: function() {
@@ -350,7 +350,7 @@ function _OpenPunch(env, os) {
     model: self.Transaction,
     url: self.apiRoot + 'transactions',
     comparator: function(model) {
-      return -1 * new XDate(model.get('dtAdd')).getTime();
+      return -1 * new XDate(model.get('dtAdd'), true).getTime();
     }
   });
 
@@ -404,7 +404,7 @@ function _OpenPunch(env, os) {
         if (group.length !== 2)
           return memo;
         else
-          return memo + Math.abs(new XDate(group[1].get('dt')).diffHours(group[0].get('dt')));
+          return memo + Math.abs(new XDate(group[1].get('dt'), true).diffHours(group[0].get('dt')));
       }, 0);
       return self.helpers.totalHours(tt);
     }
@@ -440,9 +440,9 @@ function _OpenPunch(env, os) {
       }, this)));
     },
     status: function() {
-      var start = new XDate(this.get('dtStart'))
-        , end = new XDate(this.get('dtEnd'))
-        , now = new XDate()
+      var start = new XDate(this.get('dtStart'), true)
+        , end = new XDate(this.get('dtEnd'), true)
+        , now = new XDate(true)
         , dStart = start.diffMinutes(now)
         , dEnd = end.diffMinutes(now);
       if (dStart < 0 && dEnd < 0)
@@ -484,7 +484,7 @@ function _OpenPunch(env, os) {
       };
     },
     comparator: function(event) {
-      return -new XDate(event.get('dtStart')).getTime();
+      return -new XDate(event.get('dtStart'), true).getTime();
     }
   });
   
@@ -605,7 +605,7 @@ function _OpenPunch(env, os) {
     model: self.Action,
     url: self.apiRoot + 'actions',
     comparator: function(model) {
-      return -1 * new XDate(model.get('dt')).getTime();
+      return -1 * new XDate(model.get('dt'), true).getTime();
     }
   });
   
@@ -1070,8 +1070,8 @@ function _OpenPunch(env, os) {
             _id: this.model.id,
             accountId: self.account.id,
             name: this.model.get('name'),
-            dtStart: new XDate(this.model.get('dtStart')).toDate(),
-            dtEnd: new XDate(this.model.get('dtEnd')).toDate(),
+            dtStart: new XDate(this.model.get('dtStart'), true).toDate(),
+            dtEnd: new XDate(this.model.get('dtEnd'), true).toDate(),
             cost: this.model.get('cost'),
             location: this.model.get('location'),
             facilitator: this.model.get('facilitator')
