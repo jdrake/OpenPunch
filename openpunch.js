@@ -363,7 +363,8 @@ function _OpenPunch(env, os) {
   
   self.Contact = OpenPunchModel.extend({
     defaults: {
-      role: 'participant'
+      role: 'participant',
+      manager: {}
     },
     firstLast: function() {
       return this.get('first') + ' ' + this.get('last');
@@ -413,7 +414,7 @@ function _OpenPunch(env, os) {
     model: self.Contact,
     url: self.apiRoot + 'contacts',
     comparator: function(model) {
-      return model.get('first') + ' ' + model.get('last');
+      return model.get('first').toLowerCase() + ' ' + model.get('last').toLowerCase();
     }
   });
   
@@ -1104,6 +1105,7 @@ function _OpenPunch(env, os) {
     eventCreateSuccess: function(model) {
       // Reset model
       this.form.model.clear();
+      this.form.model.set(self.Event.prototype.defaults);
       // Go to new event's dashboard
       self.router.navigate('events/' + model.id, {trigger: true});
     },
@@ -1419,6 +1421,17 @@ function _OpenPunch(env, os) {
         validators: ['required'],
         fieldClass: 'contact-role',
         editorClass: 'span12'
+      },
+      managerName: {
+        title: 'Account Managers\'s Name',
+        fieldClass: 'contact-manager-name',
+        editorClass: 'span12'
+      },
+      managerPhone: {
+        title: 'Account Managers\'s Phone',
+        fieldClass: 'contact-manager-phone',
+        editorClass: 'span12',
+        dataType: 'tel'
       }
     }
   });
@@ -1426,6 +1439,15 @@ function _OpenPunch(env, os) {
   self.EditContactView = BaseFormView.extend({
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
+      var manager = this.model.get('manager');
+      if (manager) {
+        this.model.set({
+          managerName: manager.name,
+          managerPhone: manager.phone
+        }, {
+          silent: true
+        });
+      }
       this.form = new Backbone.Form({
         model: new self.ContactSchema(this.model.toJSON()),
         idPrefix: 'contact-'

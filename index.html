@@ -606,6 +606,14 @@
               <td><%= role %></td>
             </tr>
             <tr>
+              <td>Manager Name</td>
+              <td><%= manager.name || '-' %></td>
+            </tr>
+            <tr>
+              <td>Manager Phone</td>
+              <td><%= manager.phone || '-' %></td>
+            </tr>
+            <tr>
               <td>Check-Ins</td>
               <td><%= totalCheckIns() %></td>
             </tr>
