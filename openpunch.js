@@ -46,9 +46,9 @@ function _OpenPunch(env, os) {
   // Use withCredentials to send the server cookies
   // The server must allow this through response headers
   $.ajaxPrefilter( function( options, originalOptions, jqXHR ) {
-    options.xhrFields = {
-      withCredentials: true
-    };
+//    options.xhrFields = {
+//      withCredentials: true
+//    };
     jqXHR.setRequestHeader("X-Requested-With", "XMLHttpRequest");
   });
 
@@ -1855,6 +1855,8 @@ function _OpenPunch(env, os) {
       // Reset load count
       this.renderedViews.LoadingView[0].numLoaded = 0;
       console.log('account cleared');
+      // Remove stale session ID
+      self.account.clearSessionId();
       // Go to sign in
       self.router.navigate('account/sign-in', {trigger: true});
     },
