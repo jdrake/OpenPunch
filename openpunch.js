@@ -34,9 +34,9 @@ function _OpenPunch(env, os) {
 
   var apiRoots = {
     dev: 'http://127.0.0.1:5000/api/',
-    network: 'http://192.168.0.101:3032/api/',
-    staging: 'http://dev.openpunchapp.com/api/',
-    live: 'http://openpunchapp.com/api/'
+    network: 'http://192.168.0.102:5000/api/',
+    staging: 'https://dev.openpunchapp.com/api/',
+    live: 'https://openpunchapp.com/api/'
   };
 
   self.apiRoot = apiRoots[self.env];
@@ -684,10 +684,7 @@ function _OpenPunch(env, os) {
       BaseFormView.prototype.initialize.call(this);
       _.bindAll(this, 'signInSuccess', 'signInError');
       this.form = new Backbone.Form({
-        model: new self.SignInSchema({
-          email: 'jonarc124@gmail.com',
-          password: 'drakejn3'
-        }),
+        model: new self.SignInSchema(),
         idPrefix: 'signin-'
       });
     },
@@ -716,7 +713,7 @@ function _OpenPunch(env, os) {
     },
     signInError: function(account, resp) {
       console.log('signInError: ' + resp.responseText || account);
-      this.$el.find('.form-error').text(resp.responseText).removeClass('hide');
+      this.$el.find('.form-error').text(resp.responseText || 'Could not sign in').removeClass('hide');
     }
   });
 
