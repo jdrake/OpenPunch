@@ -35,12 +35,20 @@ function _OpenPunch(env, os) {
   var apiRoots = {
     dev: 'http://127.0.0.1:5000/api/',
     network: 'http://192.168.0.102:5000/api/',
-    staging: 'https://dev.openpunchapp.com/api/',
+    staging: 'http://dev.openpunchapp.com/api/',
     live: 'https://openpunchapp.com/api/'
   };
 
   self.apiRoot = apiRoots[self.env];
 
+  // Workaround for Android devices that can't handle JSON.parse(null)
+  // https://github.com/brianleroux/lawnchair/issues/48
+  JSON.originalParse = JSON.parse;
+  JSON.parse = function(text) {
+    if (text) {
+      return JSON.originalParse(text);
+    }
+  };
 
   // Hook into jquery
   // Use withCredentials to send the server cookies
@@ -707,6 +715,8 @@ function _OpenPunch(env, os) {
       this.$el.find('.form-error').addClass('hide');
       var errors = this.form.commit();
       if (!errors) {
+        console.log(JSON.stringify(this.form.model.toJSON()));
+        console.log(self.account.urlRoot);
         self.account.fetch({
           data: this.form.model.toJSON(),
           success: this.signInSuccess,
@@ -722,7 +732,7 @@ function _OpenPunch(env, os) {
       self.router.navigate('loading', {trigger: true});
     },
     signInError: function(account, resp) {
-      console.log('signInError: ' + resp.responseText || account);
+      console.log('signInError: ' + JSON.stringify(resp));
       this.$el.find('.form-error').text(resp.responseText || 'Could not sign in').removeClass('hide');
     }
   });
