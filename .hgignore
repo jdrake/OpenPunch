@@ -5,3 +5,4 @@ syntax: glob
 .project
 *.orig
 config.js
+.DS_Store
