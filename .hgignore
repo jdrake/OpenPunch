@@ -6,3 +6,4 @@ syntax: glob
 *.orig
 config.js
 .DS_Store
+index.js
