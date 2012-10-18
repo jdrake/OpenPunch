@@ -1,14 +1,23 @@
 
-function _OpenPunch(env, os) {
+function OpenPunch() {
+
+  // Set OS
+  var os
+    , ua = navigator.userAgent.toLowerCase();
+
+  if (_.string.include(ua, "iphone"))
+    os = "ios";
+  else if (_.string.include(ua, "android"))
+    os = "android";
+  else
+    os = "browser";
   
-  // Global var to be filled with models, data, etc.
-  var self = {
-    env: env,
-    os: os,
-    hashes: {
+  // Set locals
+  var env = window.openpunch_env
+    , hashes = {
       sessionId: 'openpunch:sessionId'
-    },
-    roles: [
+    }
+    , roles = [
       {
         value: 'participant',
         label: 'Participants',
@@ -29,8 +38,7 @@ function _OpenPunch(env, os) {
         label: 'Guests',
         active: true
       }
-    ]
-  };
+    ];
 
   var apiRoots = {
     dev: 'http://127.0.0.1:5000/api/',
@@ -38,8 +46,6 @@ function _OpenPunch(env, os) {
     staging: 'http://dev.openpunchapp.com/api/',
     live: 'https://openpunchapp.com/api/'
   };
-
-  self.apiRoot = apiRoots[self.env];
 
   // Workaround for Android devices that can't handle JSON.parse(null)
   // https://github.com/brianleroux/lawnchair/issues/48
@@ -54,6 +60,9 @@ function _OpenPunch(env, os) {
   // Use withCredentials to send the server cookies
   // The server must allow this through response headers
   $.ajaxPrefilter( function( options, originalOptions, jqXHR ) {
+    // Prepend api root to urls
+    options.url = apiRoots[env] + options.url;
+    // Add credentials to header
     options.xhrFields = {
       withCredentials: true
     };
@@ -283,7 +292,7 @@ function _OpenPunch(env, os) {
 
   self.FilterGroupRoles = self.FilterGroup.extend({
     defaults: {
-      filters: new self.Filters(self.roles),
+      filters: new self.Filters(roles),
       attr: 'role'
     },
     initialize: function() {
@@ -365,7 +374,7 @@ function _OpenPunch(env, os) {
 
   self.Transactions = OpenPunchCollection.extend({
     model: self.Transaction,
-    url: self.apiRoot + 'transactions',
+    url: 'transactions',
     comparator: function(model) {
       return -1 * new XDate(model.get('dtAdd'), true).getTime();
     }
@@ -373,11 +382,11 @@ function _OpenPunch(env, os) {
 
   self.transactions = new self.Transactions();
 
-  
+
   /*
    * Contact
    */
-  
+
   self.Contact = OpenPunchModel.extend({
     defaults: {
       role: 'participant',
@@ -429,19 +438,19 @@ function _OpenPunch(env, os) {
 
   self.Contacts = OpenPunchCollection.extend({
     model: self.Contact,
-    url: self.apiRoot + 'contacts',
+    url: 'contacts',
     comparator: function(model) {
       return model.get('first').toLowerCase() + ' ' + model.get('last').toLowerCase();
     }
   });
-  
+
   self.contacts = new self.Contacts();
-   
-  
+
+
   /*
    * Event
    */
-  
+
   self.Event = OpenPunchModel.extend({
     defaults: {
       cost: 5
@@ -495,7 +504,7 @@ function _OpenPunch(env, os) {
 
   self.Events = OpenPunchCollection.extend({
     model: self.Event,
-    url: self.apiRoot + 'events',
+    url: 'events',
     defaults: function() {
       return {
         attendees: new self.Attendees()
@@ -505,16 +514,16 @@ function _OpenPunch(env, os) {
       return -new XDate(event.get('dtStart'), true).getTime();
     }
   });
-  
+
   self.events = new self.Events();
-  
-  
+
+
   /*
    * Attendee
    */
-  
+
   self.Attendee = OpenPunchModel.extend({
-    urlRoot: self.apiRoot + 'attendees',
+    urlRoot: 'attendees',
     initialize: function() {
       _.bindAll(this
         , 'updateStatus'
@@ -522,7 +531,7 @@ function _OpenPunch(env, os) {
         , 'chargeForEvent'
         , 'chargeForEventSuccess');
     },
-    
+
     /*
      * Convenience methods
      */
@@ -544,7 +553,7 @@ function _OpenPunch(env, os) {
     isCheckedOut: function() {
       return this.status() === 'out';
     },
-    
+
     /*
      * Toggle check in status
      */
@@ -601,41 +610,41 @@ function _OpenPunch(env, os) {
     }
 
   });
-  
+
   self.Attendees = OpenPunchCollection.extend({
     model: self.Attendee,
-    url: self.apiRoot + 'attendees',
+    url: 'attendees',
     initialize: function(models, options) {
       _.each(models, function(model) {
         model.eventId = options.eventId;
       });
     }
   });
-  
-  
+
+
   /*
    * Attendee action
    */
-  
+
   self.Action = OpenPunchModel.extend();
-  
+
   self.Actions = OpenPunchCollection.extend({
     model: self.Action,
-    url: self.apiRoot + 'actions',
+    url: 'actions',
     comparator: function(model) {
       return -1 * new XDate(model.get('dt'), true).getTime();
     }
   });
-  
+
   self.actions = new self.Actions();
-  
-  
+
+
   /*
    * User account
    */
-  
+
   self.Account = OpenPunchModel.extend({
-    urlRoot: self.apiRoot + 'account',
+    urlRoot: 'account',
     meta: function() {
       return {
         accountId: this.id,
@@ -661,23 +670,23 @@ function _OpenPunch(env, os) {
     },
     setSessionId: function() {
       if (this.get('sessionId'))
-        localStorage.setItem(self.hashes.sessionId, this.get('sessionId'));
+        localStorage.setItem(hashes.sessionId, this.get('sessionId'));
     },
     getSessionId: function() {
-      return localStorage.getItem(self.hashes.sessionId);
+      return localStorage.getItem(hashes.sessionId);
     },
     clearSessionId: function() {
       this.unset('sessionId', {silent: true});
-      localStorage.removeItem(self.hashes.sessionId);
+      localStorage.removeItem(hashes.sessionId);
     }
   });
-  
+
   self.account = new self.Account();
-  
+
   /*
    * Sign In
    */
-   
+
   self.SignInSchema = Backbone.Model.extend({
     schema: {
       email: {
@@ -695,7 +704,7 @@ function _OpenPunch(env, os) {
       }
     }
   });
-   
+
   self.SignInView = BaseFormView.extend({
     el: '#sign-in',
     initialize: function() {
@@ -1067,14 +1076,14 @@ function _OpenPunch(env, os) {
   self.EventEditView = BaseFormView.extend({
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
-      if (self.os==='ios') {
+      if (os==='ios') {
         this.form = new Backbone.Form({
           model: new self.EventSchema({
             _id: this.model.id,
             accountId: self.account.id,
             name: this.model.get('name'),
-            dtStart: self.helpers.datePickerFormats[self.os].datetime(this.model.get('dtStart')),
-            dtEnd: self.helpers.datePickerFormats[self.os].datetime(this.model.get('dtEnd')),
+            dtStart: self.helpers.datePickerFormats[os].datetime(this.model.get('dtStart')),
+            dtEnd: self.helpers.datePickerFormats[os].datetime(this.model.get('dtEnd')),
             cost: this.model.get('cost'),
             location: this.model.get('location'),
             facilitator: this.model.get('facilitator')
@@ -1105,7 +1114,7 @@ function _OpenPunch(env, os) {
       _.bindAll(this, 'eventCreateSuccess');
       this.model = new self.Event();
       this.form = new Backbone.Form({
-        model: (self.os==='ios') ? new self.EventSchema(this.model.toJSON()) : new self.EventSchemaDetail(this.model.toJSON()),
+        model: (os==='ios') ? new self.EventSchema(this.model.toJSON()) : new self.EventSchemaDetail(this.model.toJSON()),
         idPrefix: 'event-'
       });
     },
@@ -1434,7 +1443,7 @@ function _OpenPunch(env, os) {
       role: {
         title: 'Role',
         type: 'Select',
-        options: _.pluck(self.roles, 'value'),
+        options: _.pluck(roles, 'value'),
         validators: ['required'],
         fieldClass: 'contact-role',
         editorClass: 'span12'
@@ -1895,7 +1904,7 @@ function _OpenPunch(env, os) {
         this.renderedViews.AccountView[id].$el.removeClass('hide');
       }
     },
-    
+
     /*
      * Loading
      */
@@ -1924,7 +1933,7 @@ function _OpenPunch(env, os) {
         self.account.loadData();
       }
     },
-    
+
     /*
      * Events
      */
@@ -2015,7 +2024,7 @@ function _OpenPunch(env, os) {
       }
       this.loadExistingPage(id, 'EventContactsView');
     },
-    
+
     /*
      * Contacts
      */
@@ -2147,7 +2156,7 @@ function _OpenPunch(env, os) {
     }
 
   });
-  
+
   self.router = new self.Workspace();
   Backbone.history.start();
   
