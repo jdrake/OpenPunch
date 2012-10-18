@@ -3,7 +3,19 @@ Page
 */
 
 body {
-  margin-top: 48px;
+  margin-top: 40px;
+}
+
+.navbar-inner {
+  .container-fluid {
+    padding-left: 0px;
+    padding-right: 0px;
+
+    .btn-group.pull-right {
+      margin-right: 20px;
+    }
+
+  }
 }
 
 .navbar .brand {
@@ -45,19 +57,20 @@ body {
 }
 
 .content.has-footer {
-  margin-bottom: 60px;
+  margin-bottom: 40px;
 }
 
 .li-arrow {
   float: right;
-  margin-top: 0.3em;
 }
 
 .page {
   .content {
     position: relative;
+    padding-top: 10px;
 
     &.full {
+      padding-top: 0px;
       padding-left: 0px;
       padding-right: 0px;
     }
@@ -90,6 +103,33 @@ body {
         p {
           margin: 0px;
         }
+      }
+    }
+  }
+}
+
+.list-view {
+  li {
+    a {
+      #gradient > .vertical(darken(@white, 5%), darken(@white, 1%));
+      .border-radius(0px);
+      border-top: 1px solid darken(@white, 7%);
+      padding: 0.75em 20px;
+      margin: 0px;
+      display: block;
+      .name {
+        font-size: 1.25em;
+        font-weight: 200;
+      }
+      &:hover {
+        #gradient > .vertical(darken(@white, 3%), darken(@white, 5%));
+        text-decoration: none;
+        color: inherit;
+      }
+      .role {
+        float: right;
+        margin-right: 1em;
+        font-weight: 200;
       }
     }
   }

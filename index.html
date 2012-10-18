@@ -21,7 +21,7 @@
     <div id="sign-in" class="page hide">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <a class="brand" href="#index">OpenPunch</a>
           </div>
         </div>
@@ -65,7 +65,7 @@
     <div id="events" class="page hide">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <a class="brand" href="#event">Events</a>
             <ul class="nav pull-right">
               <!--<li>
@@ -99,7 +99,7 @@
       </div><!--content-->
       <div class="bottom-bar navbar">
         <div class="bottom-bar-inner navbar-inner">
-          <div class="container pagination-centered">
+          <div class="container-fluid pagination-centered">
             <ul class="nav footer-nav">
               <li class="active">
                 <a href="#events">
@@ -140,7 +140,7 @@
     <script id="event-view-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#events" class="brand">
@@ -217,7 +217,7 @@
       </div><!--content-->
       <div class="bottom-bar navbar">
         <div class="bottom-bar-inner navbar-inner">
-          <div class="container pagination-centered">
+          <div class="container-fluid pagination-centered">
             <ul class="nav footer-nav">
               <li class="active">
                 <a href="#events/<%= _id %>/dashboard"><i class="icon-th-large icon-white"></i><p>Dashboard</p></a>
@@ -238,7 +238,7 @@
     <script id="event-edit-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#events/<%= _id %>"><i class="icon-chevron-left icon-white"></i></a>
@@ -282,7 +282,7 @@
     <script id="event-create-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#events"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
@@ -311,19 +311,19 @@
     <script id="event-contacts-view-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
-                <a href="#events/<%= _id %>"><i class="icon-chevron-left icon-white"></i></a>
-              </li>
-              <li>
-                <a class="brand" href="#events/<%= _id %>">Tap contact to check in/out</a>
+                <a class="brand" href="#events/<%= _id %>">
+                  <i class="icon-chevron-left icon-white"></i>
+                  Tap contact to check in/out
+                </a>
               </li>
             </ul>
           </div>
         </div>
       </div><!--navbar-->
-      <div class="content container-fluid">
+      <div class="content full container-fluid">
         <div class="row-fluid">
           <div class="span12">
             <ul class="contact-list nav nav-pills nav-stacked">
@@ -350,7 +350,7 @@
     <script id="event-history-view-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#events" class="brand">
@@ -378,7 +378,7 @@
       </div><!--content-->
       <div class="bottom-bar navbar">
         <div class="bottom-bar-inner navbar-inner">
-          <div class="container pagination-centered">
+          <div class="container-fluid pagination-centered">
             <ul class="footer-nav nav">
               <li>
                 <a href="#events/<%= _id %>/dashboard"><i class="icon-th-large icon-white"></i><p>Dashboard</p></a>
@@ -404,7 +404,7 @@
     <div id="contacts" class="page hide">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <a class="brand" href="#contacts">Contacts</a>
             <div class="btn-group pull-right leave-open">
               <a id="filter-contacts" href="#" role="button" class="btn">
@@ -432,7 +432,7 @@
           </div>
         </div>
       </div><!--navbar-->
-      <div class="content has-footer container-fluid">
+      <div class="content full has-footer container-fluid">
         <div class="row-fluid">
           <div class="span12">
             <div class="delete-alert alert alert-success hide">
@@ -450,7 +450,7 @@
       </div><!--content-->
       <div class="bottom-bar navbar">
         <div class="bottom-bar-inner navbar-inner">
-          <div class="container pagination-centered">
+          <div class="container-fluid pagination-centered">
             <ul class="nav footer-nav">
               <li>
                 <a href="#events">
@@ -504,7 +504,7 @@
     <script id="contact-view-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#contacts" class="brand">
@@ -565,7 +565,7 @@
       </div><!--content-->
       <div class="bottom-bar navbar">
         <div class="bottom-bar-inner navbar-inner">
-          <div class="container pagination-centered">
+          <div class="container-fluid pagination-centered">
             <ul class="nav footer-nav">
               <li class="active">
                 <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
@@ -589,7 +589,7 @@
     <script id="contact-edit-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#contacts/<%= _id %>"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
@@ -633,7 +633,7 @@
     <script id="contact-create-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#contacts"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
@@ -662,7 +662,7 @@
     <script id="contact-transactions-view-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#contacts" class="brand">
@@ -707,7 +707,7 @@
       </div><!--content-->
       <div class="bottom-bar navbar">
         <div class="bottom-bar-inner navbar-inner">
-          <div class="container pagination-centered">
+          <div class="container-fluid pagination-centered">
             <ul class="nav footer-nav">
               <li>
                 <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
@@ -739,7 +739,7 @@
     <script id="transaction-create-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#contacts/<%= contactId %>"><i class="icon-chevron-left icon-white"></i><i class="icon-remove icon-white"></i></a>
@@ -768,7 +768,7 @@
     <script id="contact-history-view-template" type="text/template">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <ul class="nav">
               <li>
                 <a href="#contacts" class="brand">
@@ -799,7 +799,7 @@
       </div><!--content-->
       <div class="bottom-bar navbar">
         <div class="bottom-bar-inner navbar-inner">
-          <div class="container pagination-centered">
+          <div class="container-fluid pagination-centered">
             <ul class="nav footer-nav">
               <li>
                 <a href="#contacts/<%= _id %>/details"><i class="icon-user icon-white"></i><p>Details</p></a>
@@ -832,9 +832,11 @@
     <div id="account" class="page hide">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
-          <div class="container">
+          <div class="container-fluid">
             <a class="brand" href="#event">Account</a>
-            <a href="#account/sign-out" class="btn btn-small btn-danger pull-right">Sign Out</a>
+            <div class="btn-group pull-right">
+              <a href="#account/sign-out" class="btn btn-small btn-danger pull-right">Sign Out</a>
+            </div>
           </div>
         </div>
       </div><!--navbar-->
@@ -847,7 +849,7 @@
       </div><!--content-->
       <div class="bottom-bar navbar">
         <div class="bottom-bar-inner navbar-inner">
-          <div class="container pagination-centered">
+          <div class="container-fluid pagination-centered">
             <ul class="nav footer-nav">
               <li>
                 <a href="#events">
