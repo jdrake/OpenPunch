@@ -3,6 +3,7 @@ function OpenPunch() {
 
   // Set OS
   var os
+    , self = {}
     , ua = navigator.userAgent.toLowerCase();
 
   if (_.string.include(ua, "iphone"))
@@ -1946,9 +1947,11 @@ function OpenPunch() {
       $('.page').addClass('hide');
       if (_.has(this.renderedViews.EventsView, id)) {
         this.loadExistingPage(id, 'EventsView');
+        window.scrollTo(0, 0);
       } else {
         this.renderViews(id, ['EventsView']);
         this.renderedViews.EventsView[id].$el.removeClass('hide');
+        window.scrollTo(0, 0);
       }
     },
     eventNew: function() {
@@ -2159,7 +2162,5 @@ function OpenPunch() {
 
   self.router = new self.Workspace();
   Backbone.history.start();
-  
-  return self;
-  
+
 }
