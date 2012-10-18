@@ -715,7 +715,7 @@ function _OpenPunch(env, os) {
       }
     },
     signInSuccess: function(account) {
-      console.log('signInSuccess: ' + JSON.stringify(account.toJSON()));
+      console.log('signInSuccess'); //: ' + JSON.stringify(account.toJSON()));
       // Update local session ID
       account.setSessionId();
       // Redirect
