@@ -46,9 +46,9 @@ function _OpenPunch(env, os) {
   // Use withCredentials to send the server cookies
   // The server must allow this through response headers
   $.ajaxPrefilter( function( options, originalOptions, jqXHR ) {
-//    options.xhrFields = {
-//      withCredentials: true
-//    };
+    options.xhrFields = {
+      withCredentials: true
+    };
     jqXHR.setRequestHeader("X-Requested-With", "XMLHttpRequest");
   });
 
@@ -59,7 +59,20 @@ function _OpenPunch(env, os) {
   var MongoModel = Backbone.Model.extend({
     idAttribute: '_id',
     parse: function(resp) {
-      return resp.records ? resp.records[0] : resp;
+      var field;
+      // Convert JSONified BSON fields
+      _.each(resp, function(v, k) {
+        field = k.toLowerCase();
+        // IDs
+        if (_.string.endsWith(field, 'id') && _.isObject(v)) {
+          resp[k] = v.$oid;
+        }
+        // Dates
+        else if (_.string.startsWith(field, 'dt')) {
+          resp[k] = new XDate(v.$date);
+        }
+      });
+      return resp;
     }
   });
 
@@ -70,11 +83,7 @@ function _OpenPunch(env, os) {
   
   var OpenPunchModel = MongoModel;
   
-  var MongoCollection = Backbone.Collection.extend({
-    parse: function(resp) {
-      return resp.records || [];
-    }
-  });
+  var MongoCollection = Backbone.Collection.extend();
   
   var SFCollection = Backbone.Collection.extend({
     parse: function(response) {
@@ -430,6 +439,7 @@ function _OpenPunch(env, os) {
       cost: 5
     },
     parse: function(model) {
+      OpenPunchModel.prototype.parse.call(this, model);
       model.attendees = new self.Attendees(model.attendees || [], {eventId: model._id});
       return model;
     },
@@ -599,7 +609,7 @@ function _OpenPunch(env, os) {
    * Attendee action
    */
   
-  self.Action = Backbone.Model.extend();
+  self.Action = OpenPunchModel.extend();
   
   self.Actions = OpenPunchCollection.extend({
     model: self.Action,
