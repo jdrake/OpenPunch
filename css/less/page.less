@@ -2,7 +2,12 @@
 Page
 */
 
-a.brand {
+body {
+  margin-top: 48px;
+}
+
+.navbar .brand {
+  margin-left: 0px;
   i {
     vertical-align: middle;
     margin-top: -4px;
@@ -51,6 +56,11 @@ a.brand {
 .page {
   .content {
     position: relative;
+
+    &.full {
+      padding-left: 0px;
+      padding-right: 0px;
+    }
 
     .list-placeholder-image {
       position: absolute;
