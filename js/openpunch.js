@@ -894,6 +894,7 @@ function OpenPunch() {
      * Scanning
      */
     initScan: function(event) {
+      window.plugins = window.plugins || {};
       if (window.plugins.barcodeScanner) {
         window.plugins.barcodeScanner.scan(this.scanSuccess, this.scanError);
       } else {
@@ -924,16 +925,23 @@ function OpenPunch() {
         attendee.updateStatus();
       } else {
         // Does contact exist?
-        var contact = self.contacts.get(contactId);
+        var contact = self.contacts.get(contactId)
+          , data = _.extend(
+              self.account.meta(),
+              {
+                contactId: contactId,
+                eventId: this.model.id
+              }
+            );
         if (contact) {
-          this.model.get('attendees').create(_.extend(self.account.meta(), {contactId: contactId}), {
+          this.model.get('attendees').create(data, {
             wait: true,
             success: function(model, resp) {
               model.updateStatus();
             },
             error: function(model, resp) {
               console.error(resp);
-              alert('Could not toggle status');
+              alert('Could not toggle status: ' + (resp.responseText || 'unknown error'));
             }
           });
         } else {
