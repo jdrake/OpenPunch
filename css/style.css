@@ -801,7 +801,7 @@ a.label:hover,a.badge:hover{color:#ffffff;text-decoration:none;cursor:pointer;}
 .invisible{visibility:hidden;}
 .affix{position:fixed;}
 h6{color:#999999;text-transform:uppercase;}
-#tagline{font-size:2.5em;line-height:1em;font-weight:200;padding-bottom:0.5em;}
+#tagline{font-size:2em;line-height:1em;font-weight:200;padding-bottom:0.5em;}
 #loading .content,#error-404 .content{text-align:center;margin-top:55%;}#loading .content p,#error-404 .content p{font-size:1.5em;font-weight:200;}
 #loading .content .progress,#error-404 .content .progress{width:50%;margin:0.5em auto;}
 [class^="icon-large-"],[class*=" icon-large-"]{display:inline-block;width:48px;height:48px;*margin-right:.3em;line-height:48px;vertical-align:text-top;background-image:url("../images/icons-large.png");background-position:48px;background-repeat:no-repeat;}

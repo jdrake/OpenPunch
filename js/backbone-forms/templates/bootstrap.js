@@ -49,6 +49,17 @@
       </div>\
     ',
 
+    checkbox: '\
+      <div class="control-group field-{{key}}">\
+        <div class="controls">\
+          <label class="control-label" for="{{id}}">\
+            {{editor}} {{title}}\
+            <div class="help-inline help">{{help}}</div>\
+          </label>\
+        </div>\
+      </div>\
+    ',
+
     currency: '\
       <div class="control-group field-{{key}}">\
         <label class="control-label" for="{{id}}">\

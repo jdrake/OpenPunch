@@ -703,7 +703,12 @@ function OpenPunch() {
         validators: ['required'],
         fieldClass: 'signin-password',
         editorClass: 'span12'
-      }
+      }/*,
+      saveEmail: {
+        title: 'Remember me',
+        type: 'Checkbox',
+        template: 'checkbox'
+      }*/
     }
   });
 
@@ -1776,7 +1781,7 @@ function OpenPunch() {
     route: function(route, name, callback) {
       return Backbone.Router.prototype.route.call(this, route, name, function() {
         if (name !== 'signIn' && !(self.account.has('sessionId') || self.account.id)) {
-          this.signOut();
+          this.signIn();
           return false;
         } else {
           callback.apply(this, arguments);
