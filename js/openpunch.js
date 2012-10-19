@@ -714,6 +714,7 @@ function OpenPunch() {
 
   self.SignInView = BaseFormView.extend({
     el: '#sign-in',
+    idPrefix: 'signin-',
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
       _.bindAll(this, 'signInSuccess', 'signInError');
@@ -1078,10 +1079,10 @@ function OpenPunch() {
       this.$el.html(this.template()({_id: this.model.id}));
       this.$el.modal({show: true});
       // Set position
-      var modalTop = $(window).scrollTop() + $(window).height() - this.$el.height() - 20
-        , modelW = $('body').width()-40;
-      this.$el.width(modelW).offset({top: modalTop, left: 20});
-      this.$el.width(modelW).offset({top: modalTop, left: 20});
+      var modalTop = $(window).scrollTop() + $(window).height() - this.$el.height() - 20;
+//        , modelW = $('body').width()-40;
+      this.$el.offset({top: modalTop});
+//      this.$el.width(modelW).offset({top: modalTop, left: 20});
       return this;
     },
     dismiss: function(e) {
@@ -1131,6 +1132,7 @@ function OpenPunch() {
   });
 
   self.EventCreateView = BaseFormView.extend({
+    idPrefix: 'event-create-',
     initialize: function() {
       _.bindAll(this, 'eventCreateSuccess');
       this.model = new self.Event();
