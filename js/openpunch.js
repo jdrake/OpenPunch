@@ -112,17 +112,18 @@ function OpenPunch() {
   var OpenPunchCollection = MongoCollection;
   
   var BaseFormView = Backbone.View.extend({
+    idPrefix: 'base-form-view-',
     initialize: function() {
       _.bindAll(this, 'updateSuccess', 'updateError');
     },
     attributes: function() {
       return {
-        id: this.options.idPrefix + ((this.model) ? this.model.id : this.cid),
-        'class': this.options.idPrefix + 'page page hide'
+        id: this.idPrefix + ((this.model) ? this.model.id : this.cid),
+        'class': this.idPrefix + 'page page hide'
       };
     },
     template: function() {
-      return _.template($('#' + this.options.idPrefix + 'template').html());
+      return _.template($('#' + this.idPrefix + 'template').html());
     },
     events: {
       'click button[type=submit]': 'commitForm',
@@ -717,7 +718,7 @@ function OpenPunch() {
       });
     },
     render: function() {
-      this.$el.find('.form-container').prepend(this.form.render().el);
+      this.$el.find('.form-container').html(this.form.render().el);
       return this;
     },
     commitForm: function(e) {
@@ -1045,14 +1046,15 @@ function OpenPunch() {
   });
 
   self.FormSubmitModalView = Backbone.View.extend({
+    idPrefix: '',
     attributes: function() {
       return {
-        id: this.options.idPrefix + 'modal-' + this.model.id,
-        'class': this.options.idPrefix + 'modal modal'
+        id: this.idPrefix + 'modal-' + this.model.id,
+        'class': this.idPrefix + 'modal modal'
       };
     },
     template: function() {
-      return _.template($('#' + this.options.idPrefix + 'modal-template').html());
+      return _.template($('#' + this.idPrefix + 'modal-template').html());
     },
     events: {
       'click .dismiss': 'dismiss'
@@ -1074,7 +1076,12 @@ function OpenPunch() {
     }
   });
 
+  self.EventEditSubmitModal = self.FormSubmitModalView.extend({
+    idPrefix: 'event-edit-'
+  });
+
   self.EventEditView = BaseFormView.extend({
+    idPrefix: 'event-edit-',
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
       if (os==='ios') {
@@ -1106,7 +1113,7 @@ function OpenPunch() {
           idPrefix: 'event-'
         });
       }
-      this.modal = new self.FormSubmitModalView({model: this.model, idPrefix: this.options.idPrefix});
+      this.modal = new self.EventEditSubmitModal({model: this.model});
     }
   });
 
@@ -1463,7 +1470,12 @@ function OpenPunch() {
     }
   });
 
+  self.EditContactSubmitModal = self.FormSubmitModalView.extend({
+    idPrefix: ''
+  });
+
   self.EditContactView = BaseFormView.extend({
+    idPrefix: 'contact-edit-',
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
       var manager = this.model.get('manager');
@@ -1479,11 +1491,12 @@ function OpenPunch() {
         model: new self.ContactSchema(this.model.toJSON()),
         idPrefix: 'contact-'
       });
-      this.modal = new self.FormSubmitModalView({model: this.model, idPrefix: this.options.idPrefix});
+      this.modal = new self.EditContactSubmitModal({model: this.model});
     }
   });
 
   self.ContactCreateView = BaseFormView.extend({
+    idPrefix: 'contact-create-',
     initialize: function() {
       _.bindAll(this, 'contactCreateSuccess');
       this.model = new self.Contact();
@@ -1560,9 +1573,10 @@ function OpenPunch() {
   });
 
   self.TransactionCreateView = BaseFormView.extend({
+    idPrefix: 'transaction-create-',
     initialize: function() {
       _.bindAll(this, 'transactionCreateSuccess', 'transactionCreateError', 'changeSide');
-      this.model = new self.Transaction({contactId: this.options.contactId});
+      this.model = new self.Transaction({contactId: this.model.id});
       this.form = new Backbone.Form({
         model: new self.TransactionSchema({
           amount: 0
@@ -1635,7 +1649,9 @@ function OpenPunch() {
       this.list = this.$el.find('.transaction-list');
       this.model.transactions().each(this.renderContactTransaction);
       // Placeholder if no transactions
-      this.$el.find('.list-placeholder').toggleClass('hide', this.model.transactions().length>0);
+      var hasTransactions = this.model.transactions().length>0;
+      this.$el.find('.list-placeholder').toggleClass('hide', hasTransactions);
+      this.$el.find('.transaction-list').toggleClass('hide', !hasTransactions);
       return this;
     },
     renderContactTransaction: function(action) {
@@ -1757,7 +1773,15 @@ function OpenPunch() {
    */
 
   self.Workspace = Backbone.Router.extend({
-    initialize: function() {
+    route: function(route, name, callback) {
+      return Backbone.Router.prototype.route.call(this, route, name, function() {
+        if (name !== 'signIn' && !(self.account.has('sessionId') || self.account.id)) {
+          this.signOut();
+          return false;
+        } else {
+          callback.apply(this, arguments);
+        }
+      });
     },
 
     /*
@@ -1782,6 +1806,20 @@ function OpenPunch() {
       ContactHistoryView: {},
       Error404: {}
     },
+    pageIsLoaded: function(viewClass, id) {
+      id = id || 0;
+      return _.has(this.renderedViews[viewClass], id);
+    },
+    renderView: function(id, options, constr) {
+      if (!this.pageIsLoaded(constr, id)) {
+        // Render event
+        var view = new self[constr](options);
+        // Append to body
+        $('body').append(view.render().el);
+        // Save view for later
+        this.renderedViews[constr][id] = view;
+      }
+    },
     renderViews: function(id, toRender, options) {
       options = options || {};
       _.each(toRender, _.bind(function(constr) {
@@ -1797,6 +1835,18 @@ function OpenPunch() {
       $('.page').addClass('hide');
       $('.leave-open').removeClass('open');
       this.renderedViews[viewClass][id].render().$el.removeClass('hide');
+    },
+    loadPage: function(options) {
+      options = options || {};
+      var viewConstructors = _.flatten([options.views])
+        , viewId = options.id || 0
+        , viewOptions = options.options || {};
+      // Render views, if necessary
+      _.each(viewConstructors, _.bind(this.renderView, this, viewId, viewOptions));
+      // Load view
+      this.loadExistingPage(viewId, viewConstructors[0]);
+      // Make sure we start from the top
+      window.scrollTo(0, 0);
     },
 
 
@@ -1863,28 +1913,22 @@ function OpenPunch() {
         } else {
           // Make user sign in
           console.log('No local session ID. Sign in');
-          var id = 0;
-          $('.page').addClass('hide');
-          if (_.has(this.renderedViews.SignInView, id)) {
-            this.renderedViews.SignInView[id].$el.removeClass('hide');
-          } else {
-            this.renderViews(id, ['SignInView']);
-            this.renderedViews.SignInView[id].$el.removeClass('hide');
-          }
+          this.loadPage({views: 'SignInView'});
         }
       }
     },
 
     signOut: function() {
-      // Clear account model
+      // Clear all data
       self.account.clear({silent: true});
       self.events.reset([], {silent: true});
       self.contacts.reset([], {silent: true});
       self.actions.reset([], {silent: true});
       self.transactions.reset([], {silent: true});
       // Reset load count
-      this.renderedViews.LoadingView[0].numLoaded = 0;
-      console.log('account cleared');
+      if (this.pageIsLoaded('LoadingView')) {
+        this.renderedViews.LoadingView[0].numLoaded = 0;
+      }
       // Remove stale session ID
       self.account.clearSessionId();
       // Go to sign in
@@ -1892,31 +1936,14 @@ function OpenPunch() {
     },
 
     account: function() {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      var id = 0;
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.AccountView, id)) {
-        this.loadExistingPage(id, 'AccountView');
-      } else {
-        this.renderViews(id, ['AccountView']);
-        this.renderedViews.AccountView[id].$el.removeClass('hide');
-      }
+      this.loadPage({views: 'AccountView'});
     },
 
     /*
      * Loading
      */
     loading: function() {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      var id = 0;
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.LoadingView, id)) {
+      if (this.pageIsLoaded('LoadingView')) {
         // View exists, so check if data needs to be reloaded
         var view = this.renderedViews.LoadingView[id];
         if (view.dataReady()) {
@@ -1924,13 +1951,12 @@ function OpenPunch() {
           self.router.navigate('events', {trigger: true});
         } else {
           // Show page, reload data
-          view.$el.removeClass('hide');
+          this.loadPage({views: 'LoadingView'});
           self.account.loadData();
         }
       } else {
         // Need to render view and load data
-        this.renderViews(id, ['LoadingView']);
-        this.renderedViews.LoadingView[id].$el.removeClass('hide');
+        this.loadPage({views: 'LoadingView'});
         self.account.loadData();
       }
     },
@@ -1939,65 +1965,27 @@ function OpenPunch() {
      * Events
      */
     events: function() {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      var id = 0;
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.EventsView, id)) {
-        this.loadExistingPage(id, 'EventsView');
-        window.scrollTo(0, 0);
-      } else {
-        this.renderViews(id, ['EventsView']);
-        this.renderedViews.EventsView[id].$el.removeClass('hide');
-        window.scrollTo(0, 0);
-      }
+      this.loadPage({views: 'EventsView'});
     },
     eventNew: function() {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      var id = 0;
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.EventCreateView, id)) {
-        this.loadExistingPage(id, 'EventCreateView');
-      } else {
-        this.renderViews(id, ['EventCreateView'], {idPrefix: 'event-create-'});
-        this.renderedViews.EventCreateView[id].$el.removeClass('hide');
-      }
+      this.loadPage({views: 'EventCreateView'});
     },
     eventDashboard: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.EventView, id)) {
-        this.loadExistingPage(id, 'EventView');
+      var event = self.events.get(id);
+      if (!event) {
+        self.router.navigate('404', {trigger: true});
       } else {
-        var event = self.events.get(id);
-        if (!event) {
-          self.router.navigate('404', {trigger: true});
-        } else {
-          this.renderViews(id, ['EventView', 'EventHistoryView', 'EventContactsView'], {model: event});
-          this.renderViews(id, ['EventEditView'], {model: event, idPrefix: 'event-edit-'});
-        }
+        this.loadPage({
+          id: id,
+          views: ['EventView', 'EventHistoryView', 'EventContactsView', 'EventEditView'],
+          options: {model: event}
+        });
       }
     },
     eventEdit: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      this.loadExistingPage(id, 'EventEditView');
+      this.loadPage({id: id, views: 'EventEditView'});
     },
     eventDelete: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
       var event = self.events.get(id);
       if (confirm('Delete "' + event.get('name') + '"? This will also remove the event from each attendee\'s history.')) {
         event.destroy({
@@ -2014,83 +2002,37 @@ function OpenPunch() {
       }
     },
     eventHistory: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      this.loadExistingPage(id, 'EventHistoryView');
+      this.loadPage({id: id, views: 'EventHistoryView'});
     },
     eventContacts: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      this.loadExistingPage(id, 'EventContactsView');
+      this.loadPage({id: id, views: 'EventContactsView'});
     },
 
     /*
      * Contacts
      */
     contacts: function() {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      var id = 0;
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.ContactsView, id)) {
-        this.loadExistingPage(id, 'ContactsView');
-      } else {
-        this.renderViews(id, ['ContactsView']);
-        this.renderedViews.ContactsView[id].$el.removeClass('hide');
-      }
+      this.loadPage({views: 'ContactsView'});
     },
     contactNew: function() {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      var id = 0;
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.ContactCreateView, id)) {
-        this.loadExistingPage(id, 'ContactCreateView');
-      } else {
-        this.renderViews(id, ['ContactCreateView'], {idPrefix: 'contact-create-'});
-        this.renderedViews.ContactCreateView[id].$el.removeClass('hide');
-      }
+      this.loadPage({views: 'ContactCreateView'});
     },
     contactDetails: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      console.log(id);
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.ContactView, id)) {
-        this.loadExistingPage(id, 'ContactView');
+      var model = self.contacts.get(id);
+      if (!model) {
+        self.router.navigate('404', {trigger: true});
       } else {
-        var model = self.contacts.get(id);
-        if (!model) {
-          self.router.navigate('404', {trigger: true});
-        } else {
-          this.renderViews(id, ['ContactView', 'ContactTransactionsView', 'ContactHistoryView'], {model: model, idPrefix: 'contact-'});
-          this.renderViews(id, ['EditContactView'], {model: model, idPrefix: 'contact-edit-'});
-          this.renderViews(id, ['TransactionCreateView'], {contactId: id, idPrefix: 'transaction-create-'});
-        }
+        this.loadPage({
+          id: id,
+          views: ['ContactView', 'ContactTransactionsView', 'ContactHistoryView', 'EditContactView', 'TransactionCreateView'],
+          options: {model: model}
+        });
       }
     },
     contactEdit: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      this.loadExistingPage(id, 'EditContactView');
+      this.loadPage({id: id, views: 'EditContactView'});
     },
     contactDelete: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
       var contact = self.contacts.get(id);
       if (confirm('Delete "' + contact.firstLast() + '"? This will also remove contact from each event\'s history.')) {
         contact.destroy({
@@ -2107,60 +2049,34 @@ function OpenPunch() {
       }
     },
     transactionNew: function(contactId) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      var id = contactId
-        , viewName = 'TransactionCreateView'
-        , idPrefix = 'transaction';
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews[viewName], id)) {
-        this.loadExistingPage(id, viewName);
-      } else {
-        this.renderViews(id, [viewName], {
-          idPrefix: idPrefix+'-create-',
-          contactId: contactId
-        });
-        this.renderedViews[viewName][id].$el.removeClass('hide');
-      }
+      this.loadPage({id: contactId, views: 'TransactionCreateView'});
     },
     contactTransactions: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      this.loadExistingPage(id, 'ContactTransactionsView');
+      this.loadPage({id: id, views: 'ContactTransactionsView'});
     },
     contactHistory: function(id) {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      this.loadExistingPage(id, 'ContactHistoryView');
+      this.loadPage({id: id, views: 'ContactHistoryView'});
     },
 
     /*
     Errors
      */
     error404: function() {
-      if (!self.account.has('sessionId') || !self.account.id) {
-        self.router.navigate('account/sign-in', {trigger: true});
-        return false;
-      }
-      var id = 0;
-      $('.page').addClass('hide');
-      if (_.has(this.renderedViews.Error404, id)) {
-        this.loadExistingPage(id, 'Error404');
-      } else {
-        this.renderViews(id, ['Error404']);
-        this.renderedViews.Error404[id].$el.removeClass('hide');
-      }
+      this.loadPage({views: 'Error404'});
     }
 
   });
 
   self.router = new self.Workspace();
+
+  // Check account for all routes
+  self.router.on('route', function() {
+    if (!self.account.has('sessionId') || !self.account.id) {
+      self.router.navigate('account/sign-in', {trigger: true});
+      return false;
+    }
+  });
+
   Backbone.history.start();
 
 }
