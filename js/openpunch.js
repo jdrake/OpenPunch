@@ -695,7 +695,8 @@ function OpenPunch() {
         title: 'Email',
         validators: ['required', 'email'],
         fieldClass: 'signin-email',
-        editorClass: 'span12'
+        editorClass: 'span12',
+        dataType: 'email'
       },
       password: {
         title: 'Password',
