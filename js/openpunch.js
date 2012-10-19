@@ -1162,7 +1162,7 @@ function OpenPunch() {
   });
 
   self.EventContactsView = Backbone.View.extend({
-    className: 'page event-contacts-page hide',
+    className: 'page full event-contacts-page hide',
     attributes: function() {
       if (!this.model)
         self.router.navigate('loading', {trigger: true});

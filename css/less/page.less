@@ -2,24 +2,27 @@
 Page
 */
 
+.body-padding {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.body-padding-none {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
 body {
-  margin-top: 40px;
+//  .body-padding-none;
 }
 
-.navbar-inner {
-  .container-fluid {
-    padding-left: 0px;
-    padding-right: 0px;
-
-    .btn-group.pull-right {
-      margin-right: 20px;
-    }
-
-  }
-}
+//.navbar-inner {
+//  .body-padding;
+//}
 
 .navbar .brand {
-  margin-left: 0px;
+//  .body-padding-none;
+
   i {
     vertical-align: middle;
     margin-top: -4px;
@@ -28,17 +31,24 @@ body {
 
 .navbar-fixed-top {
   .navbar-inverse;
+//  .body-padding;
 }
 
-.nav {
-  li {
-    a.btn {
-      padding: 0.25em 0.75em;
-      color: @white;
-      &:hover {
-        .transition(none);
-        .buttonBackground(@btnSuccessBackground, @btnSuccessBackgroundHighlight);
-        background-color: inherit;
+.navbar {
+  .nav {
+    &.pull-right {
+      margin-right: 0px;
+    }
+
+    & > li > a {
+      &.btn {
+        padding: 0.25em 0.75em;
+        color: @white;
+        &:hover {
+          .transition(none);
+          .buttonBackground(@btnSuccessBackground, @btnSuccessBackgroundHighlight);
+          background-color: inherit;
+        }
       }
     }
   }
@@ -66,21 +76,24 @@ body {
 
 .page {
   .content {
-    position: relative;
-    padding-top: 10px;
-
-    &.full {
-      padding-top: 0px;
-      padding-left: 0px;
-      padding-right: 0px;
-    }
-
     .list-placeholder-image {
       position: absolute;
       top: 0px;
       right: 0px;
     }
   }
+
+  // Listviews, full height and width
+  &.full {
+    .navbar {
+      margin-bottom: 0px;
+    }
+    .content {
+      margin-left: -20px;
+      margin-right: -20px;
+    }
+  }
+
   .footer-nav {
     width: 100%;
     li {
