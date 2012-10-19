@@ -125,27 +125,38 @@ body {
 }
 
 .list-view {
+  list-style: none;
+  margin: 0px;
+
   li {
     a {
       #gradient > .vertical(darken(@white, 5%), darken(@white, 1%));
       .border-radius(0px);
       border-top: 1px solid darken(@white, 7%);
-      padding: 0.75em 20px;
+      padding: 0.5em 110px 0.5em 20px;
       margin: 0px;
       display: block;
-      .name {
-        font-size: 1.25em;
-        font-weight: 200;
-      }
+      position: relative;
+      line-height: 1.25em;
+      font-size: 1.25em;
+      font-weight: 200;
+
       &:hover {
         #gradient > .vertical(darken(@white, 3%), darken(@white, 5%));
         text-decoration: none;
         color: inherit;
       }
-      .role {
-        float: right;
-        margin-right: 1em;
+      .aside {
+        position: absolute;
+        right: 3em;
+        top: 1em;
         font-weight: 200;
+      }
+      .li-arrow {
+        position: absolute;
+        right: 0.75em;
+        top: 0.75em;
+        margin-top: 0px;
       }
     }
   }

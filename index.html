@@ -129,7 +129,7 @@
       <a href="#events/<%= _id %>">
         <%= name %>
         <i class="li-arrow icon-chevron-right"></i>
-        <span class="role"><%= eventTime(dtStart) %> to <%= eventTime(dtEnd) %></span>
+        <span class="aside"><%= eventTime(dtStart) %> to <%= eventTime(dtEnd) %></span>
       </a>
     </script>
 
@@ -324,7 +324,7 @@
       <div class="content container-fluid">
         <div class="row-fluid">
           <div class="span12">
-            <ul class="contact-list nav nav-pills nav-stacked">
+            <ul class="contact-list">
               <!--contacts-->
             </ul>
           </div>
@@ -337,7 +337,7 @@
         <!-- <i class="status <%= statusIconClass() %>"></i> -->
         <span class="name"><%= first %> <%= last %></span>
         <!--<i class="li-arrow icon-chevron-right"></i>-->
-        <% if (lastSeenDate()) { %><span class="role label <%= lastSeenLabelClass() %>"><%= lastSeenDate() %></span><% } %>
+        <% if (lastSeenDate()) { %><span class="aside label <%= lastSeenLabelClass() %>"><%= lastSeenDate() %></span><% } %>
       </a>
     </script>
 
@@ -392,7 +392,7 @@
 
     <script id="event-action-view-template" type="text/template">
       <a href="#contacts/<%= contact._id %>"><%= contact.first %> <%= contact.last %></a> checked <%= status %>
-      <span class="role"><%= timestamp() %></span>
+      <span class="aside"><%= timestamp() %></span>
     </script>
 
 
@@ -434,7 +434,7 @@
             <p class="list-placeholder-image list-placeholder">
               <img src="images/help-first-contact.png" alt="Create your first contact by clicking the plus sign" />
             </p>
-            <ul class="contact-list nav nav-pills nav-stacked">
+            <ul class="contact-list">
               <!--contacts list-->
             </ul>
           </div>
@@ -485,7 +485,7 @@
         <!-- <img src="images/<%= _id %>.png" alt="<%= last %> thumnail" /> -->
         <span class="name"><%= first %> <%= last %></span>
         <i class="li-arrow icon-chevron-right"></i>
-        <span class="role label"><%= role %></span>
+        <span class="aside label"><%= role %></span>
       </a>
     </script>
 
@@ -807,12 +807,12 @@
 
     <script id="contact-action-view-template" type="text/template">
       Checked <%= statusVerb() %> <a href="#events/<%= event._id %>"><%= event.name %></a>
-      <span class="role"><%= timestamp() %></span>
+      <span class="aside"><%= timestamp() %></span>
     </script>
 
     <script id="inactive-contact-action-view-template" type="text/template">
       Checked <%= statusVerb() %> <a href="#events/<%= event._id %>"><%= event.name %></a>
-      <span class="role"><%= timestamp() %></span>
+      <span class="aside"><%= timestamp() %></span>
     </script>
 
     <!--
