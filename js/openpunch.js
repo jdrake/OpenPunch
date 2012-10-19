@@ -731,8 +731,6 @@ function OpenPunch() {
       this.$el.find('.form-error').addClass('hide');
       var errors = this.form.commit();
       if (!errors) {
-        console.log(JSON.stringify(this.form.model.toJSON()));
-        console.log(self.account.urlRoot);
         self.account.fetch({
           data: this.form.model.toJSON(),
           success: this.signInSuccess,
@@ -933,7 +931,7 @@ function OpenPunch() {
             },
             error: function(model, resp) {
               console.error(resp);
-              alert('Could not toggle status');
+              alert('Could not toggle status: ' + (resp.responseText || 'unknown error'));
             }
           });
         } else {

@@ -7,3 +7,4 @@ syntax: glob
 config.js
 .DS_Store
 index.js
+js/plugins
