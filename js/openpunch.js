@@ -1070,10 +1070,12 @@ function OpenPunch() {
     },
     render: function() {
       this.$el.html(this.template()({_id: this.model.id}));
-      this.$el.modal();
+      this.$el.modal({show: true});
       // Set position
-      var modalTop = $(window).scrollTop() + $(window).height() - this.$el.height() - 20;
-      this.$el.offset({top: modalTop});
+      var modalTop = $(window).scrollTop() + $(window).height() - this.$el.height() - 20
+        , modelW = $('body').width()-40;
+      this.$el.width(modelW).offset({top: modalTop, left: 20});
+      this.$el.width(modelW).offset({top: modalTop, left: 20});
       return this;
     },
     dismiss: function(e) {
@@ -1476,7 +1478,7 @@ function OpenPunch() {
   });
 
   self.EditContactSubmitModal = self.FormSubmitModalView.extend({
-    idPrefix: ''
+    idPrefix: 'contact-edit-'
   });
 
   self.EditContactView = BaseFormView.extend({
