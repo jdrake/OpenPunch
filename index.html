@@ -129,7 +129,7 @@
       <a href="#events/<%= _id %>">
         <%= name %>
         <i class="li-arrow icon-chevron-right"></i>
-        <span class="aside"><%= eventTime(dtStart) %> to <%= eventTime(dtEnd) %></span>
+        <span class="aside"><%= eventTime(dt_start) %> to <%= eventTime(dt_end) %></span>
       </a>
     </script>
 
@@ -159,7 +159,7 @@
       <div class="content has-footer container-fluid">
         <div class="row-fluid">
           <div class="span12">
-            <p class="date"><i class="icon-calendar"></i> <%= eventDate(dtStart) %> &middot; <%= eventTime(dtStart)  %> to <%= eventTime(dtEnd) %><p>
+            <p class="date"><i class="icon-calendar"></i> <%= eventDate(dt_start) %> &middot; <%= eventTime(dt_start)  %> to <%= eventTime(dt_end) %><p>
           </div>
         </div>
         <% if (status=='past') { %>
@@ -715,7 +715,7 @@
     </script><!--contact transactions-->
 
     <script id="contact-transaction-tr-view-template" type="text/template">
-      <td><%= simpleDate(dtAdd) %></td>
+      <td><%= simpleDate(dt_add) %></td>
       <td><%= type %></td>
       <td class="right <%= amountClass() %>"><%= money(ledgerAmount()) %></td>
       <td class="right"><%= money(newBalance()) %></td>
