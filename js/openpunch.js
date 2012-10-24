@@ -16,7 +16,7 @@ function OpenPunch() {
   // Set locals
   var env = window.openpunch_env
     , hashes = {
-      sessionId: 'openpunch:sessionId'
+      session_id: 'openpunch:session_id'
     }
     , roles = [
       {
@@ -361,7 +361,7 @@ function OpenPunch() {
     },
     pastTransactions: function() {
       return this.collection.filter(function(t) {
-        return new XDate(t.get('dtAdd'), true) < new XDate(this.get('dtAdd'), true) && t.get('contactId')===this.get('contactId');
+        return new XDate(t.get('dt_add'), true) < new XDate(this.get('dt_add'), true) && t.get('contact_id')===this.get('contact_id');
       }, this);
     },
     newBalance: function() {
@@ -370,7 +370,7 @@ function OpenPunch() {
       }, this.ledgerAmount());
     },
     event: function() {
-      return (this.get('type')==='Event Fee' && this.get('eventId')) ? self.events.get(this.get('eventId')) : null;
+      return (this.get('type')==='Event Fee' && this.get('event_id')) ? self.events.get(this.get('event_id')) : null;
     }
   });
 
@@ -378,7 +378,7 @@ function OpenPunch() {
     model: self.Transaction,
     url: 'transactions',
     comparator: function(model) {
-      return -1 * new XDate(model.get('dtAdd'), true).getTime();
+      return -1 * new XDate(model.get('dt_add'), true).getTime();
     }
   });
 
@@ -401,10 +401,10 @@ function OpenPunch() {
       return this.get('first') + ' ' + this.get('last')[0] + '.';
     },
     actions: function() {
-      return new self.Actions(self.actions.where({contactId: this.id}));
+      return new self.Actions(self.actions.where({contact_id: this.id}));
     },
     transactions: function() {
-      return new self.Transactions(self.transactions.where({contactId: this.id}));
+      return new self.Transactions(self.transactions.where({contact_id: this.id}));
     },
     balance: function() {
       return this.transactions().reduce(function(memo, t) {
@@ -421,11 +421,11 @@ function OpenPunch() {
         return '';
     },
     totalCheckIns: function() {
-      return _.uniq(_.pluck(this.actions().where({status: 'in'}), 'eventId')).length;
+      return _.uniq(_.pluck(this.actions().where({status: 'in'}), 'event_id')).length;
     },
     totalTime: function() {
       var groups = this.actions().groupBy(function(action) {
-        return action.get('eventId');
+        return action.get('event_id');
       });
       // dtOut - dtIn, Hours
       var tt = _.reduce(groups, function(memo, group) {
@@ -459,18 +459,18 @@ function OpenPunch() {
     },
     parse: function(model) {
       OpenPunchModel.prototype.parse.call(this, model);
-      model.attendees = new self.Attendees(model.attendees || [], {eventId: model._id});
+      model.attendees = new self.Attendees(model.attendees || [], {event_id: model._id});
       return model;
     },
     allActions: function() {
       return new self.Actions(self.actions.filter(_.bind(function(action) {
         // This event, and contact still exists
-        return action.get('eventId') === this.id && self.contacts.get(action.get('contactId'));
+        return action.get('event_id') === this.id && self.contacts.get(action.get('contact_id'));
       }, this)));
     },
     status: function() {
-      var start = new XDate(this.get('dtStart'), true)
-        , end = new XDate(this.get('dtEnd'), true)
+      var start = new XDate(this.get('dt_start'), true)
+        , end = new XDate(this.get('dt_end'), true)
         , now = new XDate(true)
         , dStart = start.diffMinutes(now)
         , dEnd = end.diffMinutes(now);
@@ -483,19 +483,19 @@ function OpenPunch() {
     },
     totalAttendees: function() {
       var checkIns = this.allActions().where({status: 'in'})
-        , contactIds = _.map(checkIns, function(action){ return action.get('contactId'); })
-        , uniqIds = _.uniq(contactIds);
+        , contact_ids = _.map(checkIns, function(action){ return action.get('contact_id'); })
+        , uniqIds = _.uniq(contact_ids);
       return uniqIds.length;
     },
     lastAttendeeName: function() {
       var actions = this.allActions();
       if (actions.length > 0) {
-        var contactId = actions.first().get('contactId');
-        var contact = self.contacts.get(contactId);
+        var contact_id = actions.first().get('contact_id');
+        var contact = self.contacts.get(contact_id);
         if (contact) {
           return contact.firstLast();
         } else {
-          console.error('No contact found with id ', contactId);
+          console.error('No contact found with id ', contact_id);
           return '?!';
         }
       } else {
@@ -513,7 +513,7 @@ function OpenPunch() {
       };
     },
     comparator: function(event) {
-      return -new XDate(event.get('dtStart'), true).getTime();
+      return -new XDate(event.get('dt_start'), true).getTime();
     }
   });
 
@@ -539,8 +539,8 @@ function OpenPunch() {
      */
     actions: function() {
       return new self.Actions(self.actions.where({
-        eventId: this.get('eventId'),
-        contactId: this.get('contactId')
+        event_id: this.get('event_id'),
+        contact_id: this.get('contact_id')
       }));
     },
     latestAction: function() {
@@ -562,8 +562,8 @@ function OpenPunch() {
     updateStatus: function() {
       self.actions.create(_.extend(
         self.account.meta(), {
-        eventId: this.get('eventId'),
-        contactId: this.get('contactId'),
+        event_id: this.get('event_id'),
+        contact_id: this.get('contact_id'),
         status: this.isCheckedIn() ? 'out' : 'in'
       }), {
         wait: true,
@@ -584,18 +584,18 @@ function OpenPunch() {
      */
     chargeForEvent: function(model, coll) {
       var trans = self.transactions.where({
-        eventId: this.get('eventId'),
-        contactId: this.get('contactId')
+        event_id: this.get('event_id'),
+        contact_id: this.get('contact_id')
       });
       // Only charge once per event
       if (trans.length === 0)
         self.transactions.create(_.extend(
           self.account.meta(),
           {
-            eventId: this.get('eventId'),
-            contactId: this.get('contactId'),
+            event_id: this.get('event_id'),
+            contact_id: this.get('contact_id'),
             type: 'Event Fee',
-            amount: self.events.get(this.get('eventId')).get('cost'),
+            amount: self.events.get(this.get('event_id')).get('cost'),
             side: 'd'
           }
         ), {
@@ -618,7 +618,7 @@ function OpenPunch() {
     url: 'attendees',
     initialize: function(models, options) {
       _.each(models, function(model) {
-        model.eventId = options.eventId;
+        model.event_id = options.event_id;
       });
     }
   });
@@ -649,8 +649,8 @@ function OpenPunch() {
     urlRoot: 'account',
     meta: function() {
       return {
-        accountId: this.id,
-        sessionId: this.get('sessionId')
+        account_id: this.id,
+        session_id: this.get('session_id')
       };
     },
     loadData: function() {
@@ -671,15 +671,15 @@ function OpenPunch() {
       self.transactions.fetch(options);
     },
     setSessionId: function() {
-      if (this.get('sessionId'))
-        localStorage.setItem(hashes.sessionId, this.get('sessionId'));
+      if (this.get('session_id'))
+        localStorage.setItem(hashes.session_id, this.get('session_id'));
     },
     getSessionId: function() {
-      return localStorage.getItem(hashes.sessionId);
+      return localStorage.getItem(hashes.session_id);
     },
     clearSessionId: function() {
-      this.unset('sessionId', {silent: true});
-      localStorage.removeItem(hashes.sessionId);
+      this.unset('session_id', {silent: true});
+      localStorage.removeItem(hashes.session_id);
     }
   });
 
@@ -819,7 +819,7 @@ function OpenPunch() {
     },
     renderEvents: function(events, resp) {
       var eventGroups = events.groupBy(function(event) {
-        return self.helpers.eventDate(event.get('dtStart'));
+        return self.helpers.eventDate(event.get('dt_start'));
       });
       _.each(eventGroups, _.bind(function(events, key, list) {
         this.list.append('<li class="section-title"><h6>' + key + '</h6></li>');
@@ -878,7 +878,7 @@ function OpenPunch() {
       };
     },
     refresh: function(action) {
-      if (action.get('eventId')===this.model.id)
+      if (action.get('event_id')===this.model.id)
         this.render();
     },
     render: function() {
@@ -918,19 +918,19 @@ function OpenPunch() {
     /*
      * Attendee status
      */
-    toggleStatus: function(contactId) {
-      var attendees = this.model.get('attendees').where({contactId: contactId});
+    toggleStatus: function(contact_id) {
+      var attendees = this.model.get('attendees').where({contact_id: contact_id});
       if (attendees.length > 0) {
         var attendee = attendees[0];
         attendee.updateStatus();
       } else {
         // Does contact exist?
-        var contact = self.contacts.get(contactId)
+        var contact = self.contacts.get(contact_id)
           , data = _.extend(
               self.account.meta(),
               {
-                contactId: contactId,
-                eventId: this.model.id
+                contact_id: contact_id,
+                event_id: this.model.id
               }
             );
         if (contact) {
@@ -963,14 +963,14 @@ function OpenPunch() {
         },
         editorClass: 'span12'
       },
-      dtStart: {
+      dt_start: {
         title: 'Start Date &amp; Time',
         dataType: 'datetime',
         validators: ['required'],
         fieldClass: 'event-startdatetime',
         editorClass: 'span12'
       },
-      dtEnd: {
+      dt_end: {
         title: 'End Date &amp; Time',
         dataType: 'datetime',
         validators: ['required'],
@@ -1016,14 +1016,14 @@ function OpenPunch() {
         },
         editorClass: 'span12'
       },
-      dtStart: {
+      dt_start: {
         title: 'Start Date',
         type: 'DateTime',
         validators: ['required'],
         fieldClass: 'event-startdatetime',
         editorClass: 'span12'
       },
-      dtEnd: {
+      dt_end: {
         title: 'End Date',
         type: 'DateTime',
         validators: ['required'],
@@ -1103,10 +1103,10 @@ function OpenPunch() {
         this.form = new Backbone.Form({
           model: new self.EventSchema({
             _id: this.model.id,
-            accountId: self.account.id,
+            account_id: self.account.id,
             name: this.model.get('name'),
-            dtStart: self.helpers.datePickerFormats[os].datetime(this.model.get('dtStart')),
-            dtEnd: self.helpers.datePickerFormats[os].datetime(this.model.get('dtEnd')),
+            dt_start: self.helpers.datePickerFormats[os].datetime(this.model.get('dt_start')),
+            dt_end: self.helpers.datePickerFormats[os].datetime(this.model.get('dt_end')),
             cost: this.model.get('cost'),
             location: this.model.get('location'),
             facilitator: this.model.get('facilitator')
@@ -1117,10 +1117,10 @@ function OpenPunch() {
         this.form = new Backbone.Form({
           model: new self.EventSchemaDetail({
             _id: this.model.id,
-            accountId: self.account.id,
+            account_id: self.account.id,
             name: this.model.get('name'),
-            dtStart: new XDate(this.model.get('dtStart'), true).toDate(),
-            dtEnd: new XDate(this.model.get('dtEnd'), true).toDate(),
+            dt_start: new XDate(this.model.get('dt_start'), true).toDate(),
+            dt_end: new XDate(this.model.get('dt_end'), true).toDate(),
             cost: this.model.get('cost'),
             location: this.model.get('location'),
             facilitator: this.model.get('facilitator')
@@ -1184,10 +1184,10 @@ function OpenPunch() {
       return this;
     },
     renderEventContact: function(contact) {
-      var attendees = this.model.get('attendees').where({contactId: contact.id})
+      var attendees = this.model.get('attendees').where({contact_id: contact.id})
         , attendee = (attendees.length>0) ? attendees[0] : new self.Attendee({
-            contactId: contact.id,
-            eventId: this.model.id
+            contact_id: contact.id,
+            event_id: this.model.id
           });
       var view = new self.EventContactLiView({
         model: contact,
@@ -1247,7 +1247,7 @@ function OpenPunch() {
     },
     render: function(action) {
       if (action)
-        if (!(action.get('eventId')===this.event.id && action.get('contactId')===this.model.id))
+        if (!(action.get('event_id')===this.event.id && action.get('contact_id')===this.model.id))
           return;
       this.$el.html(this.template(_.extend(this.model.toJSON(), self.helpers, this.helpers(), {
         attendee: this.attendee.toJSON()
@@ -1312,7 +1312,7 @@ function OpenPunch() {
         , 'timestamp'
         , 'timestampLabelClass'
       );
-      this.model.set({contact: self.contacts.get(this.model.get('contactId')).toJSON()});
+      this.model.set({contact: self.contacts.get(this.model.get('contact_id')).toJSON()});
     },
 
     /*
@@ -1592,7 +1592,7 @@ function OpenPunch() {
     idPrefix: 'transaction-create-',
     initialize: function() {
       _.bindAll(this, 'transactionCreateSuccess', 'transactionCreateError', 'changeSide');
-      this.model = new self.Transaction({contactId: this.model.id});
+      this.model = new self.Transaction({contact_id: this.model.id});
       this.form = new Backbone.Form({
         model: new self.TransactionSchema({
           amount: 0
@@ -1628,9 +1628,9 @@ function OpenPunch() {
       // Reset model
       this.form.model.clear();
       // Go to new contact transactions list
-      self.router.navigate('contacts/' + model.get('contactId') + '/transactions', {trigger: true});
+      self.router.navigate('contacts/' + model.get('contact_id') + '/transactions', {trigger: true});
       // Show alert
-      self.router.renderedViews.ContactTransactionsView[model.get('contactId')].showAddAlert();
+      self.router.renderedViews.ContactTransactionsView[model.get('contact_id')].showAddAlert();
     },
     transactionCreateError: function(model, resp) {
       console.log(resp.responseText);
@@ -1745,7 +1745,7 @@ function OpenPunch() {
     template: _.template($('#contact-action-view-template').html()),
     initialize: function() {
       _.bindAll(this, 'timestamp');
-      var event = self.events.get(this.model.get('eventId'));
+      var event = self.events.get(this.model.get('event_id'));
       if (event)
         this.model.set({event: event.toJSON()});
       else
@@ -1791,7 +1791,7 @@ function OpenPunch() {
   self.Workspace = Backbone.Router.extend({
     route: function(route, name, callback) {
       return Backbone.Router.prototype.route.call(this, route, name, function() {
-        if (name !== 'signIn' && !(self.account.has('sessionId') || self.account.id)) {
+        if (name !== 'signIn' && !(self.account.has('session_id') || self.account.id)) {
           this.signIn();
           return false;
         } else {
@@ -1899,8 +1899,8 @@ function OpenPunch() {
      * Account
      */
     signIn: function() {
-      console.log('account has sessionId?', self.account.has('sessionId'));
-      if (self.account.has('sessionId')) {
+      console.log('account has session_id?', self.account.has('session_id'));
+      if (self.account.has('session_id')) {
         // Account signed in, move along...
         console.log('account already fetched');
         self.router.navigate('loading', {trigger: true});
@@ -1911,7 +1911,7 @@ function OpenPunch() {
           // Session cookie set, need to retrieve account then move along...
           console.log('Fetch account using local session id');
           self.account.fetch({
-            data: {sessionId: localSessionId},
+            data: {session_id: localSessionId},
             success: function(model, resp) {
               // Set session ID
               self.account.setSessionId();
@@ -2064,8 +2064,8 @@ function OpenPunch() {
         });
       }
     },
-    transactionNew: function(contactId) {
-      this.loadPage({id: contactId, views: 'TransactionCreateView'});
+    transactionNew: function(contact_id) {
+      this.loadPage({id: contact_id, views: 'TransactionCreateView'});
     },
     contactTransactions: function(id) {
       this.loadPage({id: id, views: 'ContactTransactionsView'});
@@ -2087,7 +2087,7 @@ function OpenPunch() {
 
   // Check account for all routes
   self.router.on('route', function() {
-    if (!self.account.has('sessionId') || !self.account.id) {
+    if (!self.account.has('session_id') || !self.account.id) {
       self.router.navigate('account/sign-in', {trigger: true});
       return false;
     }

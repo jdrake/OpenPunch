@@ -1020,7 +1020,10 @@ h6{color:#999999;text-transform:uppercase;}
 .bottom-bar .bottom-bar-inner{-webkit-border-radius:0px;-moz-border-radius:0px;border-radius:0px;}
 .content.has-footer{margin-bottom:60px;}
 .li-arrow{float:right;}
-.page .content{margin-top:50px;}.page .content .list-placeholder-image{position:absolute;top:0px;right:0px;}
+.list-placeholder-image{float:right;}
+.page.full .list-placeholder-image{margin-top:1em;}
+#img-first-contact{margin-right:2em;}
+.page .content{margin-top:50px;}
 .page.full .navbar{margin-bottom:0px;}
 .page.full .content{margin-top:40px;margin-left:-20px;margin-right:-20px;}
 .page .footer-nav{width:100%;}.page .footer-nav li{display:inline-block;float:none;}.page .footer-nav li.active{border-top:3px solid #5bc0de;}.page .footer-nav li.active a i{opacity:1;filter:alpha(opacity=100);}
