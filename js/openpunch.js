@@ -113,6 +113,8 @@ function OpenPunch() {
   
   var BaseFormView = Backbone.View.extend({
     idPrefix: 'base-form-view-',
+    submitButtonTemplate: _.template('<input type="submit" class="btn btn-large btn-block btn-primary" value="<%= label %>" />'),
+    submitButtonLabel: 'Submit', // override this for each child view
     initialize: function() {
       _.bindAll(this, 'updateSuccess', 'updateError');
     },
@@ -130,9 +132,13 @@ function OpenPunch() {
       'submit form': 'commitForm',
       'keyup': 'commitFormOnEnter'
     },
+    appendSubmit:function () {
+      this.$el.find('form').append(this.submitButtonTemplate({label:this.submitButtonLabel}));
+    },
     render: function() {
       this.$el.html(this.template()(_.extend(this.model.toJSON(), self.helpers)));
       this.$el.find('.form-container').prepend(this.form.render().el);
+      this.appendSubmit();
       return this;
     },
     commitFormOnEnter: function(e) {
@@ -716,6 +722,7 @@ function OpenPunch() {
   self.SignInView = BaseFormView.extend({
     el: '#sign-in',
     idPrefix: 'signin-',
+    submitButtonLabel: 'Sign In',
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
       _.bindAll(this, 'signInSuccess', 'signInError');
@@ -726,6 +733,7 @@ function OpenPunch() {
     },
     render: function() {
       this.$el.find('.form-container').html(this.form.render().el);
+      this.appendSubmit();
       return this;
     },
     commitForm: function(e) {
@@ -1096,6 +1104,7 @@ function OpenPunch() {
 
   self.EventEditView = BaseFormView.extend({
     idPrefix: 'event-edit-',
+    submitButtonLabel: 'Save Event',
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
       if (os==='ios') {
@@ -1133,6 +1142,7 @@ function OpenPunch() {
 
   self.EventCreateView = BaseFormView.extend({
     idPrefix: 'event-create-',
+    submitButtonLabel: 'Save New Event',
     initialize: function() {
       _.bindAll(this, 'eventCreateSuccess');
       this.model = new self.Event();
@@ -1493,6 +1503,7 @@ function OpenPunch() {
 
   self.EditContactView = BaseFormView.extend({
     idPrefix: 'contact-edit-',
+    submitButtonLabel: 'Save Contact',
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
       var manager = this.model.get('manager');
@@ -1514,6 +1525,7 @@ function OpenPunch() {
 
   self.ContactCreateView = BaseFormView.extend({
     idPrefix: 'contact-create-',
+    submitButtonLabel: 'Save New Contact',
     initialize: function() {
       _.bindAll(this, 'contactCreateSuccess');
       this.model = new self.Contact();
@@ -1592,6 +1604,7 @@ function OpenPunch() {
 
   self.TransactionCreateView = BaseFormView.extend({
     idPrefix: 'transaction-create-',
+    submitButtonLabel: 'Create Transaction',
     initialize: function() {
       _.bindAll(this, 'transactionCreateSuccess', 'transactionCreateError', 'changeSide');
       this.model = new self.Transaction({contact_id: this.model.id});
