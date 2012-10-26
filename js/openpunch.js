@@ -1166,6 +1166,8 @@ function OpenPunch() {
       // Reset model
       this.form.model.clear();
       this.form.model.set(self.Event.prototype.defaults);
+      // Remove focus from form
+      $(':focus').blur();
       // Go to new event's dashboard
       self.router.navigate('events/' + model.id, {trigger: true});
     },
@@ -1546,6 +1548,8 @@ function OpenPunch() {
       }
     },
     contactCreateSuccess: function(model) {
+      // Remove focus from form
+      $(':focus').blur();
       self.router.navigate('contacts/' + model.id, {trigger: true});
     },
     contactCreateError: function() {
@@ -1642,6 +1646,8 @@ function OpenPunch() {
     transactionCreateSuccess: function(model) {
       // Reset model
       this.form.model.clear();
+      // Remove focus from form
+      $(':focus').blur();
       // Go to new contact transactions list
       self.router.navigate('contacts/' + model.get('contact_id') + '/transactions', {trigger: true});
       // Show alert
