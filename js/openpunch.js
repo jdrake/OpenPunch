@@ -128,8 +128,7 @@ function OpenPunch() {
       return _.template($('#' + this.idPrefix + 'template').html());
     },
     events: {
-      'click [type=submit]': 'commitForm',
-      'keyup': 'commitFormOnEnter'
+      'click [type=submit]': 'commitForm'
     },
     appendSubmit:function () {
       this.$el.find('form').append(this.submitButtonTemplate({label:this.submitButtonLabel}));
@@ -139,10 +138,6 @@ function OpenPunch() {
       this.$el.find('.form-container').prepend(this.form.render().el);
       this.appendSubmit();
       return this;
-    },
-    commitFormOnEnter: function(e) {
-      if (e.keyCode === 13)
-        this.commitForm(e);
     },
     commitForm: function(e) {
       e.preventDefault();
