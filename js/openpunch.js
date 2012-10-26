@@ -129,7 +129,6 @@ function OpenPunch() {
     },
     events: {
       'click [type=submit]': 'commitForm',
-      'submit form': 'commitForm',
       'keyup': 'commitFormOnEnter'
     },
     appendSubmit:function () {
