@@ -127,6 +127,7 @@ function OpenPunch() {
     },
     events: {
       'click [type=submit]': 'commitForm',
+      'submit form': 'commitForm',
       'keyup': 'commitFormOnEnter'
     },
     render: function() {
@@ -728,7 +729,6 @@ function OpenPunch() {
       return this;
     },
     commitForm: function(e) {
-      console.log(JSON.stringify(e));
       e.preventDefault();
       this.$el.find('.form-error').addClass('hide');
       var errors = this.form.commit();
