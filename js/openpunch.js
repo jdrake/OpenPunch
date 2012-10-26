@@ -741,6 +741,8 @@ function OpenPunch() {
     },
     signInSuccess: function(account) {
       console.log('signInSuccess'); //: ' + JSON.stringify(account.toJSON()));
+      // Remove focus from form
+      $(':focus').blur();
       // Update local session ID
       account.setSessionId();
       // Redirect
@@ -1847,8 +1849,11 @@ function OpenPunch() {
       }, this));
     },
     loadExistingPage: function(id, viewClass) {
+      // Hide all pages
       $('.page').addClass('hide');
+      // Hide all menus left open
       $('.leave-open').removeClass('open');
+      // Show page
       this.renderedViews[viewClass][id].render().$el.removeClass('hide');
     },
     loadPage: function(options) {
