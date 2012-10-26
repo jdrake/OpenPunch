@@ -1039,7 +1039,7 @@ td.plus{color:#46a546;}
 td.minus{color:#9d261d;}
 form .help{font-size:0.9em;color:#999999;vertical-align:baseline;}
 .form-container button[type='submit']{display:block;width:100%;padding-left:0;padding-right:0;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box;margin-bottom:1em;}
-.form-container form{margin-bottom:0.5em;}.form-container form input[type=text],.form-container form input[type=email],.form-container form input[type=password],.form-container form select,.form-container form textarea{font-size:1.5em;font-weight:200;padding:0px 0.5em;height:2em;}
+.form-container form{margin-bottom:0.5em;}.form-container form input:not([type=submit]),.form-container form select,.form-container form textarea{font-size:1.5em;font-weight:200;padding:0px 0.5em;height:2em;}
 .form-container form textarea{height:4em;padding:0.5em;}
 .form-container form input.span12,.form-container form select.span12,.form-container form textarea.span12{width:99.99999998999999%;}
 .form-container form input.currency{width:25%;text-align:right;font-size:20px;}
