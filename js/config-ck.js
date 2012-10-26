@@ -1,1 +1,0 @@
-var openpunch_env="staging";

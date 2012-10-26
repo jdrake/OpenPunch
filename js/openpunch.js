@@ -143,6 +143,7 @@ function OpenPunch() {
       var errors = this.form.commit();
       if (!errors) {
         this.model.save(this.form.model.toJSON(), {
+          headers: self.account.reqHeaders(),
           success: this.updateSuccess,
           error: this.updateError
         });
@@ -560,13 +561,13 @@ function OpenPunch() {
      * Toggle check in status
      */
     updateStatus: function() {
-      self.actions.create(_.extend(
-        self.account.meta(), {
+      self.actions.create({
         event_id: this.get('event_id'),
         contact_id: this.get('contact_id'),
         status: this.isCheckedIn() ? 'out' : 'in'
-      }), {
+      }, {
         wait: true,
+        headers: self.account.reqHeaders(),
         success: this.chargeForEvent,
         error: this.updateStatusError
       });
@@ -589,19 +590,17 @@ function OpenPunch() {
       });
       // Only charge once per event
       if (trans.length === 0)
-        self.transactions.create(_.extend(
-          self.account.meta(),
-          {
+        self.transactions.create({
             event_id: this.get('event_id'),
             contact_id: this.get('contact_id'),
             type: 'Event Fee',
             amount: self.events.get(this.get('event_id')).get('cost'),
             side: 'd'
-          }
-        ), {
-          wait: true,
-          success: this.chargeForEventSuccess,
-          error: this.chargeForEventError
+          }, {
+            wait: true,
+            headers: self.account.reqHeaders(),
+            success: this.chargeForEventSuccess,
+            error: this.chargeForEventError
         });
     },
     chargeForEventSuccess: function(model, resp) {
@@ -647,16 +646,16 @@ function OpenPunch() {
 
   self.Account = OpenPunchModel.extend({
     urlRoot: 'account',
-    meta: function() {
+    reqHeaders: function() {
       return {
-        account_id: this.id,
-        session_id: this.get('session_id')
+        'X-OpenPunch-Account-Id': this.id,
+        'X-OpenPunch-Session-Id': this.getSessionId()
       };
     },
     loadData: function() {
       console.log('fetch all data');
       var options = {
-        data: this.meta(),
+        headers: this.reqHeaders(),
         success: function(coll, resp) {
           console.log('coll fetch success');
         },
@@ -925,24 +924,21 @@ function OpenPunch() {
         attendee.updateStatus();
       } else {
         // Does contact exist?
-        var contact = self.contacts.get(contact_id)
-          , data = _.extend(
-              self.account.meta(),
-              {
-                contact_id: contact_id,
-                event_id: this.model.id
-              }
-            );
+        var contact = self.contacts.get(contact_id);
         if (contact) {
-          this.model.get('attendees').create(data, {
-            wait: true,
-            success: function(model, resp) {
-              model.updateStatus();
-            },
-            error: function(model, resp) {
-              console.error(resp);
-              alert('Could not toggle status: ' + (resp.responseText || 'unknown error'));
-            }
+          this.model.get('attendees').create({
+              contact_id: contact_id,
+              event_id: this.model.id
+            }, {
+              wait: true,
+              headers: self.account.reqHeaders(),
+              success: function(model, resp) {
+                model.updateStatus();
+              },
+              error: function(model, resp) {
+                console.error(resp);
+                alert('Could not toggle status: ' + (resp.responseText || 'unknown error'));
+              }
           });
         } else {
           alert('Contact with that ID does not exist');
@@ -1146,7 +1142,8 @@ function OpenPunch() {
       e.preventDefault();
       var errors = this.form.commit();
       if (!errors) {
-        self.events.create(_.extend(self.account.meta(), this.form.model.toJSON()), {
+        self.events.create(this.form.model.toJSON(), {
+          headers: self.account.reqHeaders(),
           success: this.eventCreateSuccess,
           error: this.eventCreateError
         });
@@ -1263,8 +1260,9 @@ function OpenPunch() {
       if (this.attendee.actions().length > 0)
         this.attendee.updateStatus();
       else
-        this.event.get('attendees').create(_.extend(self.account.meta(), this.attendee.toJSON()), {
+        this.event.get('attendees').create(this.attendee.toJSON(), {
           wait: true,
+          headers: self.account.reqHeaders(),
           success: function(model, resp) {
             model.updateStatus();
           },
@@ -1525,7 +1523,8 @@ function OpenPunch() {
       e.preventDefault();
       var errors = this.form.commit();
       if (!errors) {
-        self.contacts.create(_.extend(self.account.meta(), this.form.model.toJSON()), {
+        self.contacts.create(this.form.model.toJSON(), {
+          headers: self.account.reqHeaders(),
           success: this.contactCreateSuccess,
           error: this.contactCreateError
         });
@@ -1611,13 +1610,13 @@ function OpenPunch() {
       if (!errors) {
         self.transactions.create(
           _.extend(
-            self.account.meta(),
             this.options,
             this.model.toJSON(),
             this.form.model.toJSON()
           ),
           {
             wait: true,
+            headers: self.account.reqHeaders(),
             success: this.transactionCreateSuccess,
             error: this.transactionCreateError
           }
@@ -1911,7 +1910,7 @@ function OpenPunch() {
           // Session cookie set, need to retrieve account then move along...
           console.log('Fetch account using local session id');
           self.account.fetch({
-            data: {session_id: localSessionId},
+            headers: self.account.reqHeaders(),
             success: function(model, resp) {
               // Set session ID
               self.account.setSessionId();
@@ -2005,7 +2004,7 @@ function OpenPunch() {
       var event = self.events.get(id);
       if (confirm('Delete "' + event.get('name') + '"? This will also remove the event from each attendee\'s history.')) {
         event.destroy({
-          headers: self.account.meta(),
+          headers: self.account.reqHeaders(),
           success: _.bind(function() {
             this.renderedViews.EventsView[0].showDeleteAlert();
             self.router.navigate('events', {trigger: true});
@@ -2052,7 +2051,7 @@ function OpenPunch() {
       var contact = self.contacts.get(id);
       if (confirm('Delete "' + contact.firstLast() + '"? This will also remove contact from each event\'s history.')) {
         contact.destroy({
-          headers: self.account.meta(),
+          headers: self.account.reqHeaders(),
           success: _.bind(function() {
             this.renderedViews.ContactsView[0].showDeleteAlert();
             self.router.navigate('contacts', {trigger: true});
