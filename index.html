@@ -711,7 +711,11 @@
 
     <script id="contact-transaction-tr-view-template" type="text/template">
       <td><%= simpleDate(dt_add) %></td>
+      <% if (event) { %>
+      <td><a href="#events/<%= event._id %>"><%= event.name %></a></td>
+      <% } else { %>
       <td><%= type %></td>
+      <% } %>
       <td class="right <%= amountClass() %>"><%= money(ledgerAmount()) %></td>
       <td class="right"><%= money(newBalance()) %></td>
       <!--<td class="right"><i class="icon-chevron-right"></i></td>-->
@@ -908,7 +912,7 @@
         app.initialize();
     </script>
     
-    <script src="http://192.168.0.102:8081/target/target-script-min.js#anonymous"></script>
+    <!--<script src="http://192.168.0.102:8081/target/target-script-min.js#anonymous"></script>-->
 
   </body>
 </html>

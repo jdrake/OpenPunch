@@ -9,3 +9,4 @@ config.js
 index.js
 js/plugins
 cordova-*.js
+codekit-config.json

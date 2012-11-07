@@ -402,8 +402,15 @@ function OpenPunch() {
     firstLastInitial: function() {
       return this.get('first') + ' ' + this.get('last')[0] + '.';
     },
+    attendees: function() {
+      return new self.Attendees(self.attendees.where({contact_id: this.id}));
+    },
     actions: function() {
-      return new self.Actions(self.actions.where({contact_id: this.id}));
+      var actions = this.attendees().map(function(a) {
+        return a.actions();
+      });
+      var flattened = _.flatten(actions);
+      return new self.Actions(flattened);
     },
     transactions: function() {
       return new self.Transactions(self.transactions.where({contact_id: this.id}));
@@ -423,18 +430,12 @@ function OpenPunch() {
         return '';
     },
     totalCheckIns: function() {
-      return _.uniq(_.pluck(this.actions().where({status: 'in'}), 'event_id')).length;
+      return this.attendees().length;
     },
     totalTime: function() {
-      var groups = this.actions().groupBy(function(action) {
-        return action.get('event_id');
-      });
       // dtOut - dtIn, Hours
-      var tt = _.reduce(groups, function(memo, group) {
-        if (group.length !== 2)
-          return memo;
-        else
-          return memo + Math.abs(new XDate(group[1].get('dt'), true).diffHours(group[0].get('dt')));
+      var tt = this.attendees().reduce(function(memo, attendee) {
+        return memo + attendee.hours();
       }, 0);
       return self.helpers.totalHours(tt);
     }
@@ -459,23 +460,24 @@ function OpenPunch() {
     defaults: {
       cost: 5
     },
-    parse: function(model) {
-      OpenPunchModel.prototype.parse.call(this, model);
-      model.attendees = new self.Attendees(model.attendees || [], {event_id: model._id});
-      return model;
+    attendees: function() {
+      return new self.Attendees(self.attendees.where({event_id: this.id}));
     },
     allActions: function() {
-      return new self.Actions(self.actions.filter(_.bind(function(action) {
-        // This event, and contact still exists
-        return action.get('event_id') === this.id && self.contacts.get(action.get('contact_id'));
-      }, this)));
+      var actions = this.attendees().map(function(a) {
+        return a.actions();
+      });
+      var flattened = _.flatten(actions);
+      return new self.Actions(flattened);
     },
     status: function() {
       var start = new XDate(this.get('dt_start'), true)
+        , startEarly = start.addMinutes(-30)
         , end = new XDate(this.get('dt_end'), true)
+        , endLate = end.addMinutes(30)
         , now = new XDate(true)
-        , dStart = start.diffMinutes(now)
-        , dEnd = end.diffMinutes(now);
+        , dStart = startEarly.diffMinutes(now)
+        , dEnd = endLate.diffMinutes(now);
       if (dStart < 0 && dEnd < 0)
         return 'future';
       else if (dStart > 0 && dEnd > 0)
@@ -484,16 +486,13 @@ function OpenPunch() {
         return 'live';
     },
     totalAttendees: function() {
-      var checkIns = this.allActions().where({status: 'in'})
-        , contact_ids = _.map(checkIns, function(action){ return action.get('contact_id'); })
-        , uniqIds = _.uniq(contact_ids);
-      return uniqIds.length;
+      return this.attendees().length;
     },
     lastAttendeeName: function() {
-      var actions = this.allActions();
-      if (actions.length > 0) {
-        var contact_id = actions.first().get('contact_id');
-        var contact = self.contacts.get(contact_id);
+      var lastAttendee = this.attendees().last();
+      if (lastAttendee) {
+        var contact_id = lastAttendee.get('contact_id')
+          , contact = self.contacts.get(contact_id);
         if (contact) {
           return contact.firstLast();
         } else {
@@ -509,119 +508,12 @@ function OpenPunch() {
   self.Events = OpenPunchCollection.extend({
     model: self.Event,
     url: 'events',
-    defaults: function() {
-      return {
-        attendees: new self.Attendees()
-      };
-    },
     comparator: function(event) {
       return -new XDate(event.get('dt_start'), true).getTime();
     }
   });
 
   self.events = new self.Events();
-
-
-  /*
-   * Attendee
-   */
-
-  self.Attendee = OpenPunchModel.extend({
-    urlRoot: 'attendees',
-    initialize: function() {
-      _.bindAll(this
-        , 'updateStatus'
-        , 'updateStatusSuccess'
-        , 'chargeForEvent'
-        , 'chargeForEventSuccess');
-    },
-
-    /*
-     * Convenience methods
-     */
-    actions: function() {
-      return new self.Actions(self.actions.where({
-        event_id: this.get('event_id'),
-        contact_id: this.get('contact_id')
-      }));
-    },
-    latestAction: function() {
-      return this.actions().first();
-    },
-    status: function() {
-      return (this.latestAction()) ? this.latestAction().get('status') : null;
-    },
-    isCheckedIn: function() {
-      return this.status() === 'in';
-    },
-    isCheckedOut: function() {
-      return this.status() === 'out';
-    },
-
-    /*
-     * Toggle check in status
-     */
-    updateStatus: function() {
-      self.actions.create({
-        event_id: this.get('event_id'),
-        contact_id: this.get('contact_id'),
-        status: this.isCheckedIn() ? 'out' : 'in'
-      }, {
-        wait: true,
-        headers: self.account.reqHeaders(),
-        success: this.chargeForEvent,
-        error: this.updateStatusError
-      });
-    },
-    updateStatusSuccess: function() {
-      console.log('attendee status saved');
-    },
-    updateStatusError: function(err, resp) {
-      console.error(err);
-      alert('Could not update status');
-    },
-
-    /*
-    Create transaction
-     */
-    chargeForEvent: function(model, coll) {
-      var trans = self.transactions.where({
-        event_id: this.get('event_id'),
-        contact_id: this.get('contact_id')
-      });
-      // Only charge once per event
-      if (trans.length === 0)
-        self.transactions.create({
-            event_id: this.get('event_id'),
-            contact_id: this.get('contact_id'),
-            type: 'Event Fee',
-            amount: self.events.get(this.get('event_id')).get('cost'),
-            side: 'd'
-          }, {
-            wait: true,
-            headers: self.account.reqHeaders(),
-            success: this.chargeForEventSuccess,
-            error: this.chargeForEventError
-        });
-    },
-    chargeForEventSuccess: function(model, resp) {
-      console.log('event fee transaction success');
-    },
-    chargeForEventError: function(err, resp) {
-      console.error(err);
-    }
-
-  });
-
-  self.Attendees = OpenPunchCollection.extend({
-    model: self.Attendee,
-    url: 'attendees',
-    initialize: function(models, options) {
-      _.each(models, function(model) {
-        model.event_id = options.event_id;
-      });
-    }
-  });
 
 
   /*
@@ -639,6 +531,124 @@ function OpenPunch() {
   });
 
   self.actions = new self.Actions();
+
+
+  /*
+   * Attendee
+   */
+
+  self.Attendee = OpenPunchModel.extend({
+    urlRoot: 'attendees',
+    initialize: function() {
+      _.bindAll(this
+        , 'updateStatus'
+        , 'chargeForEvent'
+      );
+      this.on('sync', this.chargeForEvent, this);
+    },
+
+    /*
+     * Convenience methods
+     */
+    isCheckedIn: function() {
+      return this.get('dt_in') && !this.get('dt_out');
+    },
+    isCheckedOut: function() {
+      return this.get('dt_in') && this.get('dt_out');
+    },
+    actions: function() {
+      var actions = [];
+      if (this.get('dt_in')) {
+        actions.push(new self.Action({
+          event_id: this.get('event_id'),
+          contact_id: this.get('contact_id'),
+          dt: this.get('dt_in'),
+          status: 'in'
+        }));
+        if (this.get('dt_out')) {
+          actions.push(new self.Action({
+            event_id: this.get('event_id'),
+            contact_id: this.get('contact_id'),
+            dt: this.get('dt_out'),
+            status: 'out'
+          }))
+        }
+      }
+      return actions;
+    },
+    hours: function() {
+      if (this.get('dt_in') && this.get('dt_out')) {
+        return this.get('dt_in').diffHours(this.get('dt_out'));
+      } else {
+        return 0;
+      }
+    },
+
+    /*
+     * Toggle check in status
+     */
+    newDates: function() {
+      if (this.isNew())
+        return {dt_in: new XDate(true)};
+      else if (this.isCheckedIn())
+        return {dt_out: new XDate(true)};
+      else
+        return null;
+    },
+    updateStatus: function() {
+      var newDates = this.newDates();
+      if (newDates) {
+        this.save(newDates, {
+          wait: true,
+          headers: self.account.reqHeaders(),
+          error: this.updateStatusError
+        });
+      } else {
+        alert('Attendee has already checked in and out and cannot be checked in again.');
+      }
+    },
+    updateStatusError: function(err, resp) {
+      console.error(err);
+      alert('Could not update status');
+    },
+
+    /*
+    Create transaction
+     */
+    transactions: function() {
+      return self.transactions.where({
+        event_id: this.get('event_id'),
+        contact_id: this.get('contact_id')
+      });
+    },
+    chargeForEvent: function(model, coll) {
+      // Only charge once per event
+      if (this.transactions().length === 0) {
+        self.transactions.create({
+            event_id: this.get('event_id'),
+            contact_id: this.get('contact_id'),
+            type: 'Event Fee',
+            amount: self.events.get(this.get('event_id')).get('cost'),
+            side: 'd'
+          }, {
+            wait: true,
+            headers: self.account.reqHeaders(),
+            error: this.chargeForEventError
+        });
+      }
+    },
+    chargeForEventError: function(err, resp) {
+      console.error(err);
+    }
+
+  });
+
+  self.Attendees = OpenPunchCollection.extend({
+    model: self.Attendee,
+    url: 'attendees'
+  });
+
+  self.attendees = new self.Attendees();
 
 
   /*
@@ -667,7 +677,7 @@ function OpenPunch() {
       };
       self.events.fetch(options);
       self.contacts.fetch(options);
-      self.actions.fetch(options);
+      self.attendees.fetch(options);
       self.transactions.fetch(options);
     },
     setSessionId: function() {
@@ -786,7 +796,7 @@ function OpenPunch() {
       this.numToLoad = 4;
       self.events.on('reset', this.dataFetched, this);
       self.contacts.on('reset', this.dataFetched, this);
-      self.actions.on('reset', this.dataFetched, this);
+      self.attendees.on('reset', this.dataFetched, this);
       self.transactions.on('reset', this.dataFetched, this);
     },
     dataReady: function() {
@@ -1190,7 +1200,7 @@ function OpenPunch() {
       return this;
     },
     renderEventContact: function(contact) {
-      var attendees = this.model.get('attendees').where({contact_id: contact.id})
+      var attendees = self.attendees.where({event_id: this.model.id, contact_id: contact.id})
         , attendee = (attendees.length>0) ? attendees[0] : new self.Attendee({
             contact_id: contact.id,
             event_id: this.model.id
@@ -1216,11 +1226,12 @@ function OpenPunch() {
         , 'lastSeenDate'
         , 'lastSeenLabelClass'
         , 'toggleStatus'
+        , 'toggleStatusError'
       );
       this.event = this.options.event;
       this.attendee = this.options.attendee;
       this.attendee.on('change', this.render, this);
-      self.actions.on('add', this.render, this);
+//      self.actions.on('add', this.render, this);
     },
 
     /*
@@ -1235,10 +1246,12 @@ function OpenPunch() {
         return 'icon-blank';
     },
     lastSeenDate: function() {
-     if (this.attendee.latestAction()) {
-        return self.helpers.relativeTime(this.attendee.latestAction().get('dt'));
-      } else {
+     if (this.attendee.isNew()) {
         return null;
+      } else {
+        var t = this.attendee.isCheckedIn() ? 'dt_in' : 'dt_out';
+        var dt = this.attendee.get(t);
+        return self.helpers.relativeTime(dt);
       }
     },
     lastSeenLabelClass: function() {
@@ -1266,20 +1279,21 @@ function OpenPunch() {
      */
     toggleStatus: function(e) {
       e.preventDefault();
-      if (this.attendee.actions().length > 0)
-        this.attendee.updateStatus();
-      else
-        this.event.get('attendees').create(this.attendee.toJSON(), {
+      if (this.attendee.isNew()) {
+        this.attendee.set('dt_in', new XDate(true));
+        self.attendees.create(this.attendee, {
           wait: true,
           headers: self.account.reqHeaders(),
-          success: function(model, resp) {
-            model.updateStatus();
-          },
-          error: function() {
-            console.error(arguments);
-            alert('Could not toggle status');
-          }
+          error: this.toggleStatusError
         });
+      } else {
+        this.attendee.updateStatus();
+      }
+    },
+    toggleStatusError: function(model, resp) {
+      console.error(arguments);
+      this.attendee.unset('dt_in');
+      alert('Could not toggle status');
     }
 
   });
@@ -1294,13 +1308,10 @@ function OpenPunch() {
       };
     },
     template: _.template($('#event-history-view-template').html()),
-    initialize: function() {
-      _.bindAll(this, 'renderEventAction');
-    },
     render: function() {
       this.$el.html(this.template(_.extend(this.model.toJSON(), self.helpers)));
       this.list = this.$el.find('.action-list');
-      this.model.allActions().each(this.renderEventAction);
+      this.model.allActions().each(this.renderEventAction, this);
       // Placeholder if no events
       this.$el.find('.list-placeholder').toggleClass('hide', this.model.allActions().length>0);
       return this;
@@ -1700,14 +1711,14 @@ function OpenPunch() {
   self.ContactTransactionTrView = Backbone.View.extend({
     tagName: 'tr',
     template: _.template($('#contact-transaction-tr-view-template').html()),
-    initialize: function() {
-    },
 
     /*
      * Rendering
      */
     helpers: function() {
+      var event = this.model.event();
       return {
+        event: event ? event.toJSON() : null,
         ledgerAmount: _.bind(this.model.ledgerAmount, this.model),
         amountClass: _.bind(this.model.amountClass, this.model),
         newBalance: _.bind(this.model.newBalance, this.model)
