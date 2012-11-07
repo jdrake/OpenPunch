@@ -652,13 +652,14 @@ function OpenPunch() {
 
 
   /*
-   * User account
+   * Master account
    */
 
   self.Account = OpenPunchModel.extend({
     urlRoot: 'account',
     reqHeaders: function() {
       return {
+        'X-OpenPunch-User-Id': this.get('user_id'),
         'X-OpenPunch-Account-Id': this.id,
         'X-OpenPunch-Session-Id': this.getSessionId()
       };
@@ -1990,7 +1991,7 @@ function OpenPunch() {
     loading: function() {
       if (this.pageIsLoaded('LoadingView')) {
         // View exists, so check if data needs to be reloaded
-        var view = this.renderedViews.LoadingView[id];
+        var view = this.renderedViews.LoadingView[0];
         if (view.dataReady()) {
           // Ready to go
           self.router.navigate('events', {trigger: true});
