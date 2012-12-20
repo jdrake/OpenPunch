@@ -507,7 +507,10 @@ function OpenPunch() {
       return this.attendees().length;
     },
     lastAttendeeName: function() {
-      var lastAttendee = this.attendees().last();
+      function checkInTime(attendee) {
+        return attendee.get('dt_in').getTime();
+      }
+      var lastAttendee = _.last(this.attendees().sortBy(checkInTime));
       if (lastAttendee) {
         var contact_id = lastAttendee.get('contact_id')
           , contact = self.contacts.get(contact_id);
