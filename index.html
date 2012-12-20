@@ -865,6 +865,22 @@
     <script id="account-view-template" type="text/template">
       <h6>Email</h6>
       <p><%= email %></p>
+      <h6>User Role</h6>
+      <p><%= role %></p>
+      <h6>Account Name</h6>
+      <p><%= account_name %></p>
+      <h6>Sync</h6>
+      <p>
+        <button id="sync" class="btn btn-info">
+          <i class="icon-refresh icon-white"></i> Sync with Salesforce
+        </button>
+      </p>
+      <div id="sync-wait" class="hide">
+        <div class="progress progress-striped active">
+          <div class="bar" style="width: 100%;"></div>
+        </div>
+      </div>
+      <p id="sync-report"></p>
     </script>
 
     <!--
@@ -911,7 +927,7 @@
     <script type="text/javascript">
         app.initialize();
     </script>
-    
+
     <!--<script src="http://192.168.0.102:8081/target/target-script-min.js#anonymous"></script>-->
 
   </body>

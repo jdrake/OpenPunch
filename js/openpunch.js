@@ -12,7 +12,7 @@ function OpenPunch() {
     os = "android";
   else
     os = "browser";
-  
+
   // Set locals
   var env = window.openpunch_env
     , hashes = {
@@ -38,6 +38,11 @@ function OpenPunch() {
         value: 'guest',
         label: 'Guests',
         active: true
+      },
+      {
+        value: 'manager',
+        label: 'Managers',
+        active: true
       }
     ];
 
@@ -62,7 +67,11 @@ function OpenPunch() {
   // The server must allow this through response headers
   $.ajaxPrefilter( function( options, originalOptions, jqXHR ) {
     // Prepend api root to urls
-    options.url = apiRoots[env] + options.url;
+    if (options.url[0] === '/') {
+      options.url = apiRoots[env].replace('/api/', options.url);
+    } else {
+      options.url = apiRoots[env] + options.url;
+    }
     // Add credentials to header
     options.xhrFields = {
       withCredentials: true
@@ -73,7 +82,7 @@ function OpenPunch() {
   /*
    * Base models and collections, depending on data source
    */
-  
+
   var MongoModel = Backbone.Model.extend({
     idAttribute: '_id',
     parse: function(resp) {
@@ -98,19 +107,28 @@ function OpenPunch() {
   var SFModel = Backbone.Model.extend({
     idAttribute: 'Id'
   });
-  
-  var OpenPunchModel = MongoModel;
-  
+
+  var OpenPunchModel = MongoModel.extend({
+    isDeleted: function() {
+      return this.get('_deleted') === true;
+    }
+  });
+
   var MongoCollection = Backbone.Collection.extend();
-  
+
   var SFCollection = Backbone.Collection.extend({
     parse: function(response) {
       return response.records;
     }
   });
 
-  var OpenPunchCollection = MongoCollection;
-  
+  var OpenPunchCollection = MongoCollection.extend({
+    alive: function() {
+      var models = this.reject(function(model) { return model.isDeleted(); });
+      return new this.constructor(models);
+    }
+  });
+
   var BaseFormView = Backbone.View.extend({
     idPrefix: 'base-form-view-',
     submitButtonTemplate: _.template('<input type="submit" class="btn btn-large btn-block btn-primary" value="<%= label %>" />'),
@@ -157,12 +175,12 @@ function OpenPunch() {
       console.log(arguments);
     }
   });
-  
-  
+
+
   /*
    * Rendering helper functions
    */
-  
+
   self.helpers = {
     eventTime: function(d) {
       return new XDate(d, true).addHours(-5).toString('h:mmtt');
@@ -345,12 +363,12 @@ function OpenPunch() {
     defaults: function() {
       return {
         amount: 0,
-        side: 'c', // [c]redit or [d]ebit
+        side: 'credit', // credit or debit
         type: 'Subscription Refill'
       };
     },
     ledgerAmount: function() {
-      return this.get('amount') * ((this.get('side')==='c') ? 1 : -1);
+      return this.get('amount') * ((this.get('side')==='credit') ? 1 : -1);
     },
     amountClass: function() {
       var b = this.ledgerAmount();
@@ -362,7 +380,7 @@ function OpenPunch() {
         return '';
     },
     pastTransactions: function() {
-      return this.collection.filter(function(t) {
+      return this.collection.alive().filter(function(t) {
         return new XDate(t.get('dt_add'), true) < new XDate(this.get('dt_add'), true) && t.get('contact_id')===this.get('contact_id');
       }, this);
     },
@@ -403,7 +421,7 @@ function OpenPunch() {
       return this.get('first') + ' ' + this.get('last')[0] + '.';
     },
     attendees: function() {
-      return new self.Attendees(self.attendees.where({contact_id: this.id}));
+      return new self.Attendees(self.attendees.where({contact_id: this.id})).alive();
     },
     actions: function() {
       var actions = this.attendees().map(function(a) {
@@ -413,7 +431,7 @@ function OpenPunch() {
       return new self.Actions(flattened);
     },
     transactions: function() {
-      return new self.Transactions(self.transactions.where({contact_id: this.id}));
+      return new self.Transactions(self.transactions.alive().where({contact_id: this.id}));
     },
     balance: function() {
       return this.transactions().reduce(function(memo, t) {
@@ -461,7 +479,7 @@ function OpenPunch() {
       cost: 5
     },
     attendees: function() {
-      return new self.Attendees(self.attendees.where({event_id: this.id}));
+      return new self.Attendees(self.attendees.where({event_id: this.id})).alive();
     },
     allActions: function() {
       var actions = this.attendees().map(function(a) {
@@ -543,6 +561,7 @@ function OpenPunch() {
       _.bindAll(this
         , 'updateStatus'
         , 'chargeForEvent'
+        , 'updateAttendeeTransaction'
       );
       this.on('sync', this.chargeForEvent, this);
     },
@@ -616,7 +635,7 @@ function OpenPunch() {
     Create transaction
      */
     transactions: function() {
-      return self.transactions.where({
+      return self.transactions.alive().where({
         event_id: this.get('event_id'),
         contact_id: this.get('contact_id')
       });
@@ -629,13 +648,17 @@ function OpenPunch() {
             contact_id: this.get('contact_id'),
             type: 'Event Fee',
             amount: self.events.get(this.get('event_id')).get('cost'),
-            side: 'd'
+            side: 'debit'
           }, {
             wait: true,
             headers: self.account.reqHeaders(),
+            success: this.updateAttendeeTransaction,
             error: this.chargeForEventError
         });
       }
+    },
+    updateAttendeeTransaction: function(model, resp) {
+      this.save({transaction_id: model.id}, {headers: self.account.reqHeaders()});
     },
     chargeForEventError: function(err, resp) {
       console.error(err);
@@ -777,11 +800,46 @@ function OpenPunch() {
     el: '#account',
     template: _.template($('#account-view-template').html()),
     initialize: function() {
+      _.bindAll(this, 'sync', 'syncSuccess');
       this.model = self.account;
     },
+    events: {
+      'click #sync': 'sync'
+    },
     render: function() {
-      this.$el.find('#content-account').html(this.template(this.model.toJSON()));
+      var context = this.model.toJSON()
+        , html = this.template(context)
+        ;
+      this.$el.find('#content-account').html(html);
       return this;
+    },
+    sync: function(e) {
+      $.ajax({
+        url: '/account/sf/connect/',
+        dataType: 'json',
+        type: 'post',
+        headers: self.account.reqHeaders(),
+        success: this.syncSuccess,
+        error: this.syncError
+      });
+      this.$el.find('#sync-wait').removeClass('hide');
+      this.$el.find('#sync-report').addClass('hide');
+    },
+    syncSuccess: function(data) {
+      function sum(d) {
+        return _.reduce(d, function(memo, num) { return memo+num; }, 0);
+      }
+      var totalChanges = sum(_.map(data, function(d) {
+        return sum(_.values(d));
+      }));
+      var html = '<strong>' + totalChanges + '</strong> total change(s) synced';
+      this.$el.find('#sync-report').html(html).removeClass('hide');
+      this.$el.find('#sync-wait').addClass('hide');
+    },
+    syncError: function(jqXHR, textStatus, errorThrown) {
+      console.error(jqXHR, textStatus, errorThrown);
+      this.$el.find('#sync-wait').addClass('hide');
+      alert('Oops! There was an error syncing the account.');
     }
   });
 
@@ -833,7 +891,7 @@ function OpenPunch() {
       return this;
     },
     renderEvents: function(events, resp) {
-      var eventGroups = events.groupBy(function(event) {
+      var eventGroups = events.alive().groupBy(function(event) {
         return self.helpers.eventDate(event.get('dt_start'));
       });
       _.each(eventGroups, _.bind(function(events, key, list) {
@@ -1197,11 +1255,11 @@ function OpenPunch() {
     render: function() {
       this.$el.html(this.template(_.extend(this.model.toJSON(), self.helpers)));
       this.list = this.$el.find('.contact-list');
-      self.contacts.each(this.renderEventContact);
+      self.contacts.alive().each(this.renderEventContact);
       return this;
     },
     renderEventContact: function(contact) {
-      var attendees = self.attendees.where({event_id: this.model.id, contact_id: contact.id})
+      var attendees = self.attendees.alive().where({event_id: this.model.id, contact_id: contact.id})
         , attendee = (attendees.length>0) ? attendees[0] : new self.Attendee({
             contact_id: contact.id,
             event_id: this.model.id
@@ -1385,7 +1443,7 @@ function OpenPunch() {
       // Placeholder if no contacts
       this.$el.find('.list-placeholder').toggleClass('hide', contacts.length>0);
       // Render each
-      contacts.each(this.renderContact);
+      contacts.alive().each(this.renderContact);
     },
     renderContact: function(contact) {
       var view = new self.ContactLiView({
@@ -1628,7 +1686,7 @@ function OpenPunch() {
     },
     changeSide: function(form, titleEditor) {
       // Update ledger side
-      this.model.set({side: (titleEditor.getValue()==='Adhoc Charge') ? 'd' : 'c'}, {silent: true});
+      this.model.set({side: (titleEditor.getValue()==='Adhoc Charge') ? 'debit' : 'credit'}, {silent: true});
     },
     commitForm: function(e) {
       e.preventDefault();
