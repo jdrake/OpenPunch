@@ -694,9 +694,6 @@ function OpenPunch() {
       console.log('fetch all data');
       var options = {
         headers: this.reqHeaders(),
-        success: function(coll, resp) {
-          console.log('coll fetch success');
-        },
         error: function(coll, resp) {
           console.error(resp.responseText);
           self.router.navigate('account/sign-out', {trigger: true});
@@ -865,7 +862,6 @@ function OpenPunch() {
       return this.numLoaded === this.numToLoad;
     },
     dataFetched: function(coll) {
-      console.log('collection loaded');
       // Collections is finished loaded, so incr the counter.
       this.numLoaded = this.numLoaded + 1;
       // If counter reaches target, go to the app
