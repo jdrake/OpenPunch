@@ -172,7 +172,7 @@ function OpenPunch() {
       this.model.trigger('show:modal');
     },
     updateError: function() {
-      console.log(arguments);
+      console.error(arguments);
     }
   });
 
@@ -691,7 +691,6 @@ function OpenPunch() {
       };
     },
     loadData: function() {
-      console.log('fetch all data');
       var options = {
         headers: this.reqHeaders(),
         error: function(coll, resp) {
@@ -777,7 +776,6 @@ function OpenPunch() {
       }
     },
     signInSuccess: function(account) {
-      console.log('signInSuccess'); //: ' + JSON.stringify(account.toJSON()));
       // Remove focus from form
       $(':focus').blur();
       // Update local session ID
@@ -786,7 +784,7 @@ function OpenPunch() {
       self.router.navigate('loading', {trigger: true});
     },
     signInError: function(account, resp) {
-      console.log('signInError: ' + JSON.stringify(resp));
+      console.error('sign in error: ' + JSON.stringify(resp));
       this.$el.find('.form-error').text(resp.responseText || 'Could not sign in').removeClass('hide');
     }
   });
@@ -882,7 +880,6 @@ function OpenPunch() {
     initialize: function() {
       _.bindAll(this, 'renderEvent');
       self.events.on('reset', this.renderEvents, this);
-      self.events.on('all', function(name) { console.log('EventsView', name); }, this);
     },
     render: function() {
       this.list = this.$el.find('#events-list').empty();
@@ -1234,7 +1231,7 @@ function OpenPunch() {
       self.router.navigate('events/' + model.id, {trigger: true});
     },
     eventCreateError: function() {
-      console.log(arguments);
+      console.error(arguments);
     }
   });
 
@@ -1616,7 +1613,7 @@ function OpenPunch() {
       self.router.navigate('contacts/' + model.id, {trigger: true});
     },
     contactCreateError: function() {
-      console.log(arguments);
+      console.error(arguments);
     }
   });
 
@@ -1717,7 +1714,7 @@ function OpenPunch() {
       self.router.renderedViews.ContactTransactionsView[model.get('contact_id')].showAddAlert();
     },
     transactionCreateError: function(model, resp) {
-      console.log(resp.responseText);
+      console.error(resp.responseText);
       self.transactions.remove(self.transactions.getByCid(model.cid));
     }
   });
@@ -1986,17 +1983,14 @@ function OpenPunch() {
      * Account
      */
     signIn: function() {
-      console.log('account has session_id?', self.account.has('session_id'));
       if (self.account.has('session_id')) {
         // Account signed in, move along...
-        console.log('account already fetched');
         self.router.navigate('loading', {trigger: true});
       } else {
         // See if locally stored session ID is still valid
         var localSessionId = self.account.getSessionId();
         if (localSessionId) {
           // Session cookie set, need to retrieve account then move along...
-          console.log('Fetch account using local session id');
           self.account.fetch({
             headers: self.account.reqHeaders(),
             success: function(model, resp) {
@@ -2008,14 +2002,12 @@ function OpenPunch() {
             error: function(model, resp) {
               // Remove stale session ID
               self.account.clearSessionId();
-              console.log(resp.responseText);
               // Try sign in page again
               self.router.navigate('account/sign-in', {trigger: true});
             }
           });
         } else {
           // Make user sign in
-          console.log('No local session ID. Sign in');
           this.loadPage({views: 'SignInView'});
         }
       }
