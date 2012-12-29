@@ -49,7 +49,7 @@ function OpenPunch() {
   var apiRoots = {
     dev: 'http://127.0.0.1:5000/api/',
     network: 'http://192.168.0.103:5000/api/',
-    staging: 'http://dev.openpunchapp.com/api/',
+    staging: 'https://dev.openpunchapp.com/api/',
     live: 'https://openpunchapp.com/api/'
   };
 
