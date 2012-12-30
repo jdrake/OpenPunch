@@ -895,7 +895,7 @@ function OpenPunch() {
         _.each(events, this.renderEvent);
       }, this));
       // Placeholder if no events
-      this.$el.find('.list-placeholder').toggleClass('hide', events.length>0);
+      this.$el.find('.list-placeholder').toggleClass('hide', events.alive().length>0);
     },
     renderEvent: function(event) {
       var view = new self.EventLiView({model: event});
@@ -1437,7 +1437,7 @@ function OpenPunch() {
     },
     renderContacts: function(contacts, resp) {
       // Placeholder if no contacts
-      this.$el.find('.list-placeholder').toggleClass('hide', contacts.length>0);
+      this.$el.find('.list-placeholder').toggleClass('hide', contacts.alive().length>0);
       // Render each
       contacts.alive().each(this.renderContact);
     },
