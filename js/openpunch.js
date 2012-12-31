@@ -450,6 +450,9 @@ function OpenPunch() {
       else
         return '';
     },
+    lowBalance: function() {
+      return this.balance() < 10;
+    },
     totalCheckIns: function() {
       return this.attendees().length;
     },
@@ -547,23 +550,13 @@ function OpenPunch() {
     totalAttendees: function() {
       return this.attendees().length;
     },
-    lastAttendeeName: function() {
-      function checkInTime(attendee) {
-        return attendee.get('dt_in').getTime();
-      }
-      var lastAttendee = _.last(this.attendees().sortBy(checkInTime));
-      if (lastAttendee) {
-        var contact_id = lastAttendee.get('contact_id')
-          , contact = self.contacts.get(contact_id);
-        if (contact) {
-          return contact.firstLast();
-        } else {
-          console.error('No contact found with id ', contact_id);
-          return '?!';
-        }
-      } else {
-        return '-';
-      }
+    lastAttendee: function() {
+      var checkIns = this.attendees().sortBy(function(model) {
+        return model.get('dt_in').getTime();
+      });
+      var lastAttendee = _.last(checkIns);
+      var contact = self.contacts.alive().get(lastAttendee.get('contact_id'));
+      return contact;
     },
     facilitator: function() {
       var facilitator;
@@ -603,8 +596,6 @@ function OpenPunch() {
     }
   });
 
-  self.actions = new self.Actions();
-
 
   /*
    * Attendee
@@ -624,6 +615,9 @@ function OpenPunch() {
     /*
      * Convenience methods
      */
+    contact: function() {
+      return self.contacts.alive().get(this.get('contact_id'));
+    },
     isCheckedIn: function() {
       return this.get('dt_in') && !this.get('dt_out');
     },
@@ -714,6 +708,12 @@ function OpenPunch() {
     },
     updateAttendeeTransaction: function(model, resp) {
       this.save({transaction_id: model.id}, {headers: self.account.reqHeaders()});
+      // Alert if balance below $10
+      var contact = this.contact();
+      if (contact.lowBalance()) {
+        var msg = _.string.sprintf('%s has a low balance of %s', contact.firstLast(), self.helpers.money(contact.balance()));
+        alert(msg);
+      }
     },
     chargeForEventError: function(err, resp) {
       console.error(err);
@@ -989,24 +989,22 @@ function OpenPunch() {
         , 'scanSuccess'
         , 'scanError'
       );
-      self.actions.on('add', this.refresh, this);
+      self.attendees.on('add', this.refresh, this);
     },
-    helpers: function() {
-      return {
-        totalAttendees: this.model.totalAttendees(),
-        lastAttendeeName: this.model.lastAttendeeName(),
-        status: this.model.status()
-      };
-    },
-    refresh: function(action) {
-      if (action.get('event_id')===this.model.id)
+    refresh: function(attendee) {
+      if (attendee.get('event_id')===this.model.id)
         this.render();
     },
     render: function() {
-      var context = this.model.toJSON();
-      _.extend(context, self.helpers, this.helpers());
+      var lastAttendee = this.model.lastAttendee();
       var facilitator = this.model.facilitator();
-      context.facilitator = facilitator ? facilitator.toJSON() : null;
+      var context = this.model.toJSON();
+      _.extend(context, self.helpers, {
+        totalAttendees: this.model.totalAttendees(),
+        lastAttendee: lastAttendee ? lastAttendee.toJSON() : null,
+        status: this.model.status(),
+        facilitator: facilitator ? facilitator.toJSON() : null
+      });
       this.$el.html(this.template(context));
       return this;
     },
@@ -1020,8 +1018,6 @@ function OpenPunch() {
         window.plugins.barcodeScanner.scan(this.scanSuccess, this.scanError);
       } else {
         alert('Scanning from browser not supported');
-//        var contact = self.contacts.at(0);
-//        this.scanSuccess({text: contact.id});
       }
     },
     scanSuccess: function(result) {
@@ -1336,7 +1332,6 @@ function OpenPunch() {
       this.event = this.options.event;
       this.attendee = this.options.attendee;
       this.attendee.on('change', this.render, this);
-//      self.actions.on('add', this.render, this);
     },
 
     /*
@@ -2055,7 +2050,7 @@ function OpenPunch() {
       self.account.clear({silent: true});
       self.events.reset([], {silent: true});
       self.contacts.reset([], {silent: true});
-      self.actions.reset([], {silent: true});
+      self.attendees.reset([], {silent: true});
       self.transactions.reset([], {silent: true});
       // Reset load count
       if (this.pageIsLoaded('LoadingView')) {

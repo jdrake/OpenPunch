@@ -204,7 +204,11 @@
             </tr>
             <tr>
               <td>Last Check-In</td>
-              <td><%= lastAttendeeName %></td>
+              <% if (lastAttendee) { %>
+              <td><a href="#contacts/<%= lastAttendee._id %>"><%= lastAttendee.first %> <%= lastAttendee.last %></a></td>
+              <% } else { %>
+              <td>-</td>
+              <% } %>
             </tr>
             <tr>
               <td>Cost</td>
