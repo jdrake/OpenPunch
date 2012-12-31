@@ -485,6 +485,12 @@ function OpenPunch() {
     managers: function() {
       var models = this.where({role: 'manager'});
       return new this.constructor(models);
+    },
+    facilitators: function() {
+      var models = this.filter(function(model) {
+        return _.indexOf(['tutor'], model.get('role')) > -1;
+      });
+      return new this.constructor(models);
     }
   });
 
@@ -495,6 +501,13 @@ function OpenPunch() {
     var managers = self.contacts.managers();
     managers.push(nullManager);
     return cb(managers);
+  };
+
+  var getFacilitators = function(cb) {
+    var nullContact = new self.Contact({id: null, first: '', last: ''});
+    var contacts = self.contacts.facilitators();
+    contacts.push(nullContact);
+    return cb(contacts);
   };
 
 
@@ -551,6 +564,17 @@ function OpenPunch() {
       } else {
         return '-';
       }
+    },
+    facilitator: function() {
+      var facilitator;
+      var facilitator_id = this.get('facilitator_id');
+      if (facilitator_id) {
+        facilitator = self.contacts.alive().get(facilitator_id);
+        if (facilitator) {
+          return facilitator;
+        }
+      }
+      return null;
     }
   });
 
@@ -979,11 +1003,11 @@ function OpenPunch() {
         this.render();
     },
     render: function() {
-      this.$el.html(this.template(_.extend(
-        this.model.toJSON(),
-        self.helpers,
-        this.helpers()
-      )));
+      var context = this.model.toJSON();
+      _.extend(context, self.helpers, this.helpers());
+      var facilitator = this.model.facilitator();
+      context.facilitator = facilitator ? facilitator.toJSON() : null;
+      this.$el.html(this.template(context));
       return this;
     },
 
@@ -1087,14 +1111,13 @@ function OpenPunch() {
         help: '(optional)',
         editorClass: 'span12'
       },
-      facilitator: {
+      facilitator_id: {
         title: 'Facilitator',
+        type: 'Select',
         fieldClass: 'event-facilitator',
-        editorAttrs: {
-          placeholder: 'e.g. Tara Wickey'
-        },
         help: '(optional)',
-        editorClass: 'span12'
+        editorClass: 'span12',
+        options: getFacilitators
       }
     }
   });
@@ -1140,14 +1163,13 @@ function OpenPunch() {
         help: '(optional)',
         editorClass: 'span12'
       },
-      facilitator: {
+      facilitator_id: {
         title: 'Facilitator',
+        type: 'Select',
         fieldClass: 'event-facilitator',
-        editorAttrs: {
-          placeholder: 'e.g. Tara Wickey'
-        },
         help: '(optional)',
-        editorClass: 'span12'
+        editorClass: 'span12',
+        options: getFacilitators
       }
     }
   });
@@ -1204,7 +1226,7 @@ function OpenPunch() {
             dt_end: self.helpers.datePickerFormats[os].datetime(this.model.get('dt_end')),
             cost: this.model.get('cost'),
             location: this.model.get('location'),
-            facilitator: this.model.get('facilitator')
+            facilitator_id: this.model.get('facilitator_id')
           }),
           idPrefix: 'event-'
         });
@@ -1218,7 +1240,7 @@ function OpenPunch() {
             dt_end: new XDate(this.model.get('dt_end'), true).toDate(),
             cost: this.model.get('cost'),
             location: this.model.get('location'),
-            facilitator: this.model.get('facilitator')
+            facilitator_id: this.model.get('facilitator_id')
           }),
           idPrefix: 'event-'
         });

@@ -210,6 +210,18 @@
               <td>Cost</td>
               <td><%= money(cost) %></td>
             </tr>
+            <tr>
+              <td>Facilitator</td>
+              <% if (facilitator) { %>
+              <td><a href="#contacts/<%= facilitator._id %>"><%= facilitator.first %> <%= facilitator.last %></a></td>
+              <% } else { %>
+              <td>-</td>
+              <% } %>
+            </tr>
+            <tr>
+              <td>Location</td>
+              <td><%= location %></td>
+            </tr>
             </tbody>
           </table>
         </div><!--stats-->
