@@ -554,6 +554,8 @@ function OpenPunch() {
       var checkIns = this.attendees().sortBy(function(model) {
         return model.get('dt_in').getTime();
       });
+      if (checkIns.length === 0)
+        return null;
       var lastAttendee = _.last(checkIns);
       var contact = self.contacts.alive().get(lastAttendee.get('contact_id'));
       return contact;
