@@ -529,12 +529,12 @@
               <td><%= role %></td>
             </tr>
             <tr>
-              <td>Manager Name</td>
-              <td><%= manager.name || '-' %></td>
-            </tr>
-            <tr>
-              <td>Manager Phone</td>
-              <td><%= manager.phone || '-' %></td>
+              <td>Manager</td>
+              <% if (manager) { %>
+              <td><a href="#contacts/<%= manager._id %>"><%= manager.first %> <%= manager.last %></a></td>
+              <% } else { %>
+              <td>-</td>
+              <% } %>
             </tr>
             <tr>
               <td>Check-Ins</td>

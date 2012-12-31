@@ -412,10 +412,13 @@ function OpenPunch() {
   self.Contact = OpenPunchModel.extend({
     defaults: {
       role: 'participant',
-      manager: {}
+      manager_id: null
     },
     firstLast: function() {
       return this.get('first') + ' ' + this.get('last');
+    },
+    toString: function() {
+      return this.firstLast();
     },
     firstLastInitial: function() {
       return this.get('first') + ' ' + this.get('last')[0] + '.';
@@ -456,18 +459,43 @@ function OpenPunch() {
         return memo + attendee.hours();
       }, 0);
       return self.helpers.totalHours(tt);
+    },
+    manager: function() {
+      var manager;
+      var manager_id = this.get('manager_id');
+      if (manager_id) {
+        manager = self.contacts.alive().get(manager_id);
+        if (manager) {
+          return manager;
+        }
+      }
+      return null;
     }
   });
 
   self.Contacts = OpenPunchCollection.extend({
     model: self.Contact,
     url: 'contacts',
+    initialize: function() {
+      _.bindAll(this, 'managers');
+    },
     comparator: function(model) {
       return model.get('first').toLowerCase() + ' ' + model.get('last').toLowerCase();
+    },
+    managers: function() {
+      var models = this.where({role: 'manager'});
+      return new this.constructor(models);
     }
   });
 
   self.contacts = new self.Contacts();
+
+  var getManagers = function(cb) {
+    var nullManager = new self.Contact({id: null, first: '', last: ''});
+    var managers = self.contacts.managers();
+    managers.push(nullManager);
+    return cb(managers);
+  };
 
 
   /*
@@ -798,7 +826,7 @@ function OpenPunch() {
     el: '#account',
     template: _.template($('#account-view-template').html()),
     initialize: function() {
-      _.bindAll(this, 'sync', 'syncSuccess');
+      _.bindAll(this, 'sync', 'syncSuccess', 'syncError');
       this.model = self.account;
     },
     events: {
@@ -1508,11 +1536,11 @@ function OpenPunch() {
       };
     },
     render: function() {
-      this.$el.html(this.template(_.extend(
-        this.model.toJSON(),
-        self.helpers,
-        this.helpers())
-      ));
+      var manager = this.model.manager();
+      var context = this.model.toJSON();
+      _.extend(context, self.helpers, this.helpers());
+      context.manager = manager ? manager.toJSON() : null;
+      this.$el.html(this.template(context));
       return this;
     }
   });
@@ -1545,16 +1573,12 @@ function OpenPunch() {
         fieldClass: 'contact-role',
         editorClass: 'span12'
       },
-      managerName: {
-        title: 'Account Managers\'s Name',
-        fieldClass: 'contact-manager-name',
+      manager_id: {
+        title: 'Account Manager',
+        type: 'Select',
+        options: getManagers,
+        fieldClass: 'contact-manager',
         editorClass: 'span12'
-      },
-      managerPhone: {
-        title: 'Account Managers\'s Phone',
-        fieldClass: 'contact-manager-phone',
-        editorClass: 'span12',
-        dataType: 'tel'
       }
     }
   });
@@ -1568,15 +1592,6 @@ function OpenPunch() {
     submitButtonLabel: 'Save Contact',
     initialize: function() {
       BaseFormView.prototype.initialize.call(this);
-      var manager = this.model.get('manager');
-      if (manager) {
-        this.model.set({
-          managerName: manager.name,
-          managerPhone: manager.phone
-        }, {
-          silent: true
-        });
-      }
       this.form = new Backbone.Form({
         model: new self.ContactSchema(this.model.toJSON()),
         idPrefix: 'contact-'
