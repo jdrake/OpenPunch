@@ -14,7 +14,7 @@ function OpenPunch() {
     os = "browser";
 
   // Set locals
-  var env = window.openpunch_env
+  var env = window.openpunch_env || 'live'
     , hashes = {
       session_id: 'openpunch:session_id'
     }
