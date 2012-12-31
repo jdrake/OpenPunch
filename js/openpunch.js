@@ -887,6 +887,8 @@ function OpenPunch() {
       var html = '<strong>' + totalChanges + '</strong> total change(s) synced';
       this.$el.find('#sync-report').html(html).removeClass('hide');
       this.$el.find('#sync-wait').addClass('hide');
+      // Reload data
+      self.account.loadData();
     },
     syncError: function(jqXHR, textStatus, errorThrown) {
       console.error(jqXHR, textStatus, errorThrown);
