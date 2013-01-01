@@ -871,6 +871,7 @@ function OpenPunch() {
         url: '/account/sf/connect/',
         dataType: 'json',
         type: 'post',
+        cache: false,
         headers: self.account.reqHeaders(),
         success: this.syncSuccess,
         error: this.syncError
