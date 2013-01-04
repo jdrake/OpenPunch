@@ -1042,12 +1042,13 @@ function OpenPunch() {
      * Attendee status
      */
     toggleStatus: function(contact_id) {
-      var attendees = this.model.get('attendees').where({contact_id: contact_id});
+      var attendees = self.attendees.alive().where({contact_id: contact_id});
       if (attendees.length > 0) {
+        // Attendee exists. Check out.
         var attendee = attendees[0];
         attendee.updateStatus();
       } else {
-        // Does contact exist?
+        // Check if contact exists
         var contact = self.contacts.get(contact_id);
         if (contact) {
           this.model.get('attendees').create({
