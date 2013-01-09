@@ -51,7 +51,8 @@ function OpenPunch() {
     network: 'http://192.168.0.103:5000/api/',
     staging: 'https://dev.openpunchapp.com/api/',
     staging_http: 'http://dev.openpunchapp.com/api/',
-    live: 'https://openpunchapp.com/api/'
+    live: 'https://openpunchapp.com/api/',
+    live_http: 'http://openpunchapp.com/api/'
   };
 
   // Workaround for Android devices that can't handle JSON.parse(null)
