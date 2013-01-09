@@ -1049,17 +1049,15 @@ function OpenPunch() {
         attendee.updateStatus();
       } else {
         // Check if contact exists
-        var contact = self.contacts.get(contact_id);
+        var contact = self.contacts.alive().get(contact_id);
         if (contact) {
-          this.model.get('attendees').create({
+          self.attendees.create({
               contact_id: contact_id,
-              event_id: this.model.id
+              event_id: this.model.id,
+              dt_in: new XDate(true).toISOString()
             }, {
               wait: true,
               headers: self.account.reqHeaders(),
-              success: function(model, resp) {
-                model.updateStatus();
-              },
               error: function(model, resp) {
                 console.error(resp);
                 alert('Could not toggle status: ' + (resp.responseText || 'unknown error'));
